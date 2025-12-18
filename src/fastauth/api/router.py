@@ -1,10 +1,13 @@
 # api/router.py
-from fastauth.auth.manager import AuthManager
+from typing import TYPE_CHECKING
 from fastapi import APIRouter, Response
 from fastapi.responses import RedirectResponse
 
-def build_auth_router(auth: AuthManager) -> APIRouter:
-    router = APIRouter(prefix="/auth")
+if TYPE_CHECKING:
+    from ..auth.manager import AuthManager
+
+def build_auth_router(auth: "AuthManager") -> APIRouter:
+    router = APIRouter(prefix="/auth", tags=["Auth"])
 
     @router.post("/signup")
     async def signup():

@@ -2,7 +2,6 @@
 from fastauth.sessions.base import SessionStore
 from fastauth.tokens.base import AuthStrategy
 from fastauth.oauth.base import OAuthProvider
-from fastauth.api.router import build_auth_router
 from enum import Enum
 from .config import AuthConfig
 
@@ -22,4 +21,5 @@ class AuthManager:
         self.roles = role_enum
         self.oauth = oauth_provider
 
+        from fastauth.api.router import build_auth_router
         self.router = build_auth_router(self)
