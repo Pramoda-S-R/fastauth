@@ -1,12 +1,9 @@
 # auth/config.py
-from pydantic import BaseModel
 from enum import Enum
-
-class AuthMode(str, Enum):
-    TOKEN = "token"
-    COOKIE = "cookie"
+from pydantic import BaseModel
 
 class AuthConfig(BaseModel):
-    auth_mode: AuthMode
     session_ttl_seconds: int = 3600
     secure_cookies: bool = True
+    login_fields: list[str] = ["email"]
+    roles: type[Enum] | None = None
