@@ -1,0 +1,9 @@
+# oauth/base.py
+from typing import Protocol
+
+class OAuthProvider(Protocol):
+    name: str
+
+    async def get_authorization_url(self) -> str: ...
+    async def exchange_code(self, code: str) -> dict: ...
+    async def fetch_user(self, token_data: dict) -> dict: ...
