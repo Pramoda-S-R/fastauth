@@ -1,3 +1,4 @@
+from fastauth.sessions.memory import MemorySessionStore
 from pydantic import BaseModel
 from enum import Enum
 from fastauth.auth.config import AuthConfig
@@ -44,20 +45,6 @@ class User():
     async def get(self, user_id: str) -> AppUser | None:
         return self.store.get(user_id)
 
-class Session():
-    def __init__(self):
-        self.store = {}
-    async def create(self, user_id: str, data: dict) -> str:
-        session_id = "session_id"
-        self.store[session_id] = {"user_id": user_id, "data": data}
-        return session_id
-    async def delete(self, session_id: str):
-        del self.store[session_id]
-    async def get(self, session_id: str) -> dict:
-        return self.store[session_id]
-    async def refresh(self, session_id: str):
-        pass
-
 class Strategy():
     async def issue(self, response: Response, user_id: str) -> None:
         # Strategies should set headers or cookies
@@ -74,7 +61,7 @@ auth_manager = AuthManager(
         login_fields=["username", "email"],
     ),
     user_store=User(),
-    session_store=Session(),
+    session_store=MemorySessionStore(),
     strategy=Strategy(),
     schema=AppUser,
 )
