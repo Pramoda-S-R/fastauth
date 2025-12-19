@@ -1,6 +1,5 @@
 from fastauth.sessions.memory import MemorySessionStore
 from pydantic import BaseModel
-from enum import Enum
 from fastauth.auth.config import AuthConfig
 from fastapi import FastAPI, Response, Request 
 
@@ -67,6 +66,10 @@ auth_manager = AuthManager(
 )
 
 auth_route = auth_manager.router
+
+@auth_route.post("/test")
+async def test(id: str):
+    return await auth_manager.session.get(id)
 
 def init_routers(app_: FastAPI) -> None:
     app_.include_router(auth_route)
