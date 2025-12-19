@@ -1,5 +1,6 @@
 # oauth/registry.py
 from typing import Dict, Type
+
 from .base import OAuthProvider
 
 _PROVIDERS: Dict[str, Type[OAuthProvider]] = {}

@@ -1,14 +1,13 @@
-from fastauth.sessions.memory import MemorySessionStore
-from pydantic import BaseModel
-from fastauth.auth.config import AuthConfig
-from fastapi import FastAPI, Response, Request 
-
 from typing import List, Optional
 
+from fastapi import FastAPI, Request, Response
 from fastapi.middleware import Middleware
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 
+from fastauth.auth.config import AuthConfig
 from fastauth.auth.manager import AuthManager
+from fastauth.sessions.memory import MemorySessionStore
 
 origins = ["*"]
 
@@ -29,6 +28,11 @@ class AppUser(BaseModel):
     email: str
     username: str
     phone: Optional[str] = None
+    password: str
+
+class SignupRequest(BaseModel):
+    username: str
+    email: str
     password: str
 
 class User():
@@ -56,8 +60,10 @@ class Strategy():
 
 auth_manager = AuthManager(
     config=AuthConfig(
+        slug="auth_example",
         auth_mode="token",
         login_fields=["username", "email"],
+        signup_request=SignupRequest,
     ),
     user_store=User(),
     session_store=MemorySessionStore(),

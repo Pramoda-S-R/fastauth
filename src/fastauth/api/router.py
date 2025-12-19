@@ -1,16 +1,15 @@
 # api/router.py
-from pydantic import BaseModel, ConfigDict
 from typing import TYPE_CHECKING
-from fastapi import APIRouter, Response, HTTPException
+
+from fastapi import APIRouter, Response
 from fastapi.responses import RedirectResponse
+
 from ..crypto import hash_password
-from ..exceptions import (
-    MissingLoginFieldsException,
-    InvalidPasswordException,
-    FailedToCreateUserException,
-    FailedToCreateSessionException,
-    FailedToSignUpException,
-)
+from ..exceptions import (FailedToCreateSessionException,
+                          FailedToCreateUserException, FailedToSignUpException,
+                          InvalidPasswordException,
+                          MissingLoginFieldsException)
+
 if TYPE_CHECKING:
     from ..auth.manager import AuthManager
 
@@ -18,15 +17,8 @@ if TYPE_CHECKING:
 def build_auth_router(auth: "AuthManager") -> APIRouter:
     router = APIRouter(prefix="/auth", tags=["Auth"])
 
-    # Create a SignupRequest model dynamically from the user schema, excluding 'id'
-    class SignupRequest(BaseModel):
-        password: str
-        
-        model_config = ConfigDict(extra="allow")
-
-
     @router.post("/signup")
-    async def signup(req: SignupRequest, response: Response): # type: ignore
+    async def signup(req: auth.config.signup_request, response: Response): # type: ignore
         try:
             # extract password
             password = req.password

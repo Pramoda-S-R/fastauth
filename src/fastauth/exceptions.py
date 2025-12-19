@@ -1,5 +1,6 @@
 from fastapi import HTTPException
 
+
 class MissingLoginFieldsException(HTTPException):
     def __init__(self, e: Exception = Exception("One or more login fields are missing")):
         super().__init__(status_code=400, detail=f"Missing login fields: {str(e)}")

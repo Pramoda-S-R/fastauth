@@ -1,6 +1,8 @@
 # users/base.py
-from pydantic import BaseModel
 from typing import Protocol
+
+from pydantic import BaseModel
+
 
 class BaseUser(BaseModel):
     id: str | None = None

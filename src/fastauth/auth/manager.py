@@ -1,12 +1,13 @@
 # auth/manager.py
-from fastauth.users.base import UserStore
-from fastauth.sessions.base import SessionStore
-from fastauth.tokens.base import AuthStrategy
-from fastauth.oauth.base import OAuthProvider
-from enum import Enum
+from pydantic import BaseModel
+
+from ..oauth.base import OAuthProvider
+from ..sessions.base import SessionStore
+from ..tokens.base import AuthStrategy
+from ..users.base import UserStore
+
 from .config import AuthConfig
 
-from pydantic import BaseModel
 
 class AuthManager:
     def __init__(

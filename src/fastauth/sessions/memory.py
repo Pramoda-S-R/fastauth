@@ -1,6 +1,7 @@
 import uuid
 from datetime import datetime, timezone
 
+
 class MemorySessionStore:
     def __init__(self):
         self.store = {}

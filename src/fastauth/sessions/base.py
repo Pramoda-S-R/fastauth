@@ -1,6 +1,7 @@
 # sessions/base.py
 from typing import Protocol
 
+
 class SessionStore(Protocol):
     async def create(self, user_id: str, data: dict) -> str: ...
     async def get(self, session_id: str) -> dict | None: ...

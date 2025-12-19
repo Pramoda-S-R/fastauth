@@ -1,6 +1,7 @@
 # oauth/base.py
 from typing import Protocol
 
+
 class OAuthProvider(Protocol):
     name: str
 
