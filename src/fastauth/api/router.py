@@ -1,14 +1,16 @@
 # api/router.py
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
-from fastapi import APIRouter, Response
-from fastapi.responses import RedirectResponse
+import uuid
+import json
+from fastapi import APIRouter, Response, HTTPException
+from fastapi.responses import RedirectResponse, JSONResponse
 
 from ..crypto import hash_password
 from ..exceptions import (FailedToCreateSessionException,
                           FailedToCreateUserException, FailedToSignUpException,
                           InvalidPasswordException,
-                          MissingLoginFieldsException)
+                          MissingLoginFieldsException, FailedToIssueTokenException)
 
 if TYPE_CHECKING:
     from ..auth.manager import AuthManager
@@ -17,7 +19,13 @@ if TYPE_CHECKING:
 def build_auth_router(auth: "AuthManager") -> APIRouter:
     router = APIRouter(prefix="/auth", tags=["Auth"])
 
-    @router.post("/signup")
+    class SignUpResponse(auth.config.signup_request):
+        id: str
+        access_token: Optional[str] = None
+        refresh_token: Optional[str] = None
+        
+
+    @router.post("/signup", response_model=SignUpResponse, status_code=201)
     async def signup(req: auth.config.signup_request, response: Response): # type: ignore
         try:
             # extract password
@@ -45,14 +53,30 @@ def build_auth_router(auth: "AuthManager") -> APIRouter:
             # login after signup
             if auth.config.login_after_signup:
                 try:
-                    session_id = await auth.session.create(user_id=user.id, data={})
-                    print(session_id)
-                    await auth.strategy.issue(response, user_id=user.id)
+                    if auth.session:
+                        session_id = await auth.session.create(user.id, user.model_dump(exclude={"password", "id"}))
                 except Exception as e:
                     raise FailedToCreateSessionException(e)
-            
-            return user
+
+                try:
+                    jti = session_id if session_id else str(uuid.uuid4())
+                    claims = {"sub": user.id, "jti": jti}
+                    token = await auth.strategy.issue(response, claims, auth.config.session_ttl_seconds)
+                except Exception as e:
+                    raise FailedToIssueTokenException(e)
+
+            response_data = user.model_dump(exclude={"password"})
+            if auth.config.login_after_signup and token is not None:
+                response_data.update(token)
+
+            response.body = json.dumps(response_data, indent=2).encode("utf-8")
+            response.headers["Content-Type"] = "application/json"
+            response.media_type = "application/json"
+            response.status_code = 201
+            return response
         except Exception as e:
+            if issubclass(e.__class__, HTTPException):
+                raise e
             raise FailedToSignUpException(e)
 
     @router.post("/login")

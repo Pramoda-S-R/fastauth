@@ -21,6 +21,10 @@ class FailedToCreateSessionException(HTTPException):
     def __init__(self, e: Exception = Exception("Could not create session")):
         super().__init__(status_code=500, detail=f"Failed to create session: {str(e)}")
 
+class FailedToIssueTokenException(HTTPException):
+    def __init__(self, e: Exception = Exception("Could not issue token")):
+        super().__init__(status_code=500, detail=f"Failed to issue token: {str(e)}")
+
 class FailedToSignUpException(HTTPException):
     def __init__(self, e: Exception = Exception("There was an unexpected error signing up")):
         super().__init__(status_code=500, detail=f"Failed to sign up: {str(e)}")

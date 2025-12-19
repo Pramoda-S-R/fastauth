@@ -1,3 +1,4 @@
+from fastauth.tokens.jwt import JWTStrategy
 from typing import List, Optional
 
 from fastapi import FastAPI, Request, Response
@@ -48,26 +49,17 @@ class User():
     async def get(self, user_id: str) -> AppUser | None:
         return self.store.get(user_id)
 
-class Strategy():
-    async def issue(self, response: Response, user_id: str) -> None:
-        # Strategies should set headers or cookies
-        response.headers["X-Session-Id"] = "session_id"
-        response.set_cookie(key="fastauth_token", value="dummy_token")
-    async def extract(self, request: Request) -> str | None: 
-        pass
-    async def revoke(self, response: Response) -> None: 
-        pass
-
 auth_manager = AuthManager(
     config=AuthConfig(
         slug="auth_example",
         auth_mode="token",
         login_fields=["username", "email"],
         signup_request=SignupRequest,
+        login_after_signup=True,
     ),
     user_store=User(),
     session_store=MemorySessionStore(),
-    strategy=Strategy(),
+    strategy=JWTStrategy(secret="opensrc4lyf", algorithm="HS256"),
     schema=AppUser,
 )
 

@@ -15,7 +15,7 @@ class AuthManager:
         *,
         config: AuthConfig,
         user_store: UserStore,
-        session_store: SessionStore,
+        session_store: SessionStore | None = None,
         strategy: AuthStrategy,
         schema: type[BaseModel],
         oauth_provider: OAuthProvider | None = None,

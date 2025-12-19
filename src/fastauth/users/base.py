@@ -1,12 +1,13 @@
 # users/base.py
 from typing import Protocol
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class BaseUser(BaseModel):
     id: str | None = None
     password: str
+    model_config = ConfigDict(extra="allow")
 
 class UserStore(Protocol):
     async def create(self, data: dict) -> BaseUser: ...
