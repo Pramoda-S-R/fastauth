@@ -64,3 +64,12 @@ class FailedToLoginException(HTTPException):
     """
     def __init__(self, e: Exception = Exception("There was an unexpected error logging in")):
         super().__init__(status_code=500, detail=f"Failed to login: {str(e)}")
+
+class FailedToLogoutException(HTTPException):
+    """
+    Thrown when the user could not be logged out
+    Status code: 500
+    """
+    def __init__(self, e: Exception = Exception("There was an unexpected error logging out")):
+        super().__init__(status_code=500, detail=f"Failed to logout: {str(e)}")
+

@@ -1,9 +1,10 @@
 import uuid
 from typing import List, Optional
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Response, Request
 from fastapi.middleware import Middleware
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 from fastauth.auth.config import AuthConfig
@@ -19,7 +20,7 @@ def make_middleware() -> List[Middleware]:
             CORSMiddleware,
             allow_origins=origins,
             allow_credentials=True,
-            allow_methods=["GET", "POST", "PUT", "DELETE"],
+            allow_methods=["*"],
             allow_headers=["*"],
         ),
     ]
@@ -69,7 +70,7 @@ auth_manager = AuthManager(
         login_fields=["username", "email"],
         signup_request=SignupRequest,
         # login_request=SignupRequest,
-        login_after_signup=True,
+        login_after_signup=False,
     ),
     user_store=User(),
     session_store=MemorySessionStore(),
@@ -80,8 +81,8 @@ auth_manager = AuthManager(
 auth_route = auth_manager.router
 
 @auth_route.post("/test")
-async def test(id: str):
-    return await auth_manager.session.get(id)
+async def test(req: Request):
+    return JSONResponse(content={"cookies": req.cookies, "headers": dict(req.headers)})
 
 def init_routers(app_: FastAPI) -> None:
     app_.include_router(auth_route)

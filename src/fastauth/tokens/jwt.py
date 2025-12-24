@@ -42,4 +42,5 @@ class JWTStrategy:
         pass
     
     async def revoke(self, response: Response) -> None:
-        pass
+        if self.set_refresh_cookie:
+            response.delete_cookie("refresh-token")
