@@ -50,7 +50,7 @@ def build_auth_router(auth: "AuthManager") -> APIRouter:
             user_data = req.model_dump(exclude={"password"})
 
             # validate login fields
-            if any(field not in user_data for field in auth.config.login_fields):
+            if not any(field in user_data for field in auth.config.login_fields):
                 raise MissingLoginFieldsException()
 
             # validate password
