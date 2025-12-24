@@ -1,7 +1,9 @@
-from fastapi import Request, Response
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Callable
+
 import jwt
+from fastapi import Request, Response
+
 
 class JWTStrategy:
     def __init__(self, secret: str, algorithm: str = "HS256", set_refresh_cookie: bool = True, get_additional_claims: Callable[[None], dict[str, str]] = lambda: {}, refresh_ttl_seconds: int = 604800):

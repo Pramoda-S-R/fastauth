@@ -5,7 +5,6 @@ from ..oauth.base import OAuthProvider
 from ..sessions.base import SessionStore
 from ..tokens.base import AuthStrategy
 from ..users.base import UserStore
-
 from .config import AuthConfig
 
 

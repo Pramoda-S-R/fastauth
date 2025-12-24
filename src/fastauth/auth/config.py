@@ -4,7 +4,7 @@ from typing import Annotated, Callable
 
 from pydantic import BaseModel, StringConstraints, field_validator
 
-from .models import SignupRequest
+from .models import LoginRequest, SignupRequest
 
 LowerSnakeStr = Annotated[
     str,
@@ -20,6 +20,7 @@ class AuthConfig(BaseModel):
     password_validator: Callable[[str], bool] = lambda x: True
     roles: type[Enum] | None = None
     signup_request: type[BaseModel] | None = SignupRequest
+    login_request: type[BaseModel] | None = LoginRequest
 
     @field_validator("signup_request")
     @classmethod

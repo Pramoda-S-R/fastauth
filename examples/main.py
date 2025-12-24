@@ -1,7 +1,7 @@
-from fastauth.tokens.jwt import JWTStrategy
+import uuid
 from typing import List, Optional
 
-from fastapi import FastAPI, Request, Response
+from fastapi import FastAPI
 from fastapi.middleware import Middleware
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -9,6 +9,7 @@ from pydantic import BaseModel
 from fastauth.auth.config import AuthConfig
 from fastauth.auth.manager import AuthManager
 from fastauth.sessions.memory import MemorySessionStore
+from fastauth.tokens.jwt import JWTStrategy
 
 origins = ["*"]
 
@@ -39,15 +40,27 @@ class SignupRequest(BaseModel):
 class User():
     def __init__(self):
         self.store = {}
-    async def create(self, data: dict) -> AppUser:
-        user_id = "user_id"
-        user = AppUser(id=user_id, **data)
-        self.store[user_id] = data
+    async def create(self, **kwargs) -> AppUser:
+        user_id = str(uuid.uuid4())
+        user = AppUser(id=user_id, **kwargs)
+        self.store[user_id] = kwargs
         return user
     async def delete(self, user_id: str):
         del self.store[user_id]
     async def get(self, user_id: str) -> AppUser | None:
-        return self.store.get(user_id)
+        return AppUser(id=user_id, **self.store.get(user_id))
+    async def find(self, **kwargs) -> AppUser | None:
+        if "email" in kwargs:
+            user_id = next(
+                (u for u, v in self.store.items() if v.get("email") == kwargs["email"]),
+                None
+            )
+        elif "username" in kwargs:
+            user_id = next(
+                (u for u, v in self.store.items() if v.get("username") == kwargs["username"]),
+                None
+            )
+        return AppUser(id=user_id, **self.store.get(user_id)) if user_id else None
 
 auth_manager = AuthManager(
     config=AuthConfig(
@@ -55,6 +68,7 @@ auth_manager = AuthManager(
         auth_mode="token",
         login_fields=["username", "email"],
         signup_request=SignupRequest,
+        # login_request=SignupRequest,
         login_after_signup=True,
     ),
     user_store=User(),
