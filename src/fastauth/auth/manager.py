@@ -3,7 +3,7 @@ from pydantic import BaseModel
 
 from ..oauth.base import OAuthProvider
 from ..sessions.base import SessionStore
-from ..tokens.base import AuthStrategy
+from ..strategy.base import AuthStrategy
 from ..users.base import UserStore
 from .config import AuthConfig
 
@@ -31,5 +31,7 @@ class AuthManager:
                 raise ValueError(f"Login field '{field}' is not in the user schema")
 
         from fastauth.api.router import build_auth_router
+        from fastauth.api.dependencies import get_current_user_dependency
 
         self.router = build_auth_router(self)
+        self.current_user = get_current_user_dependency(self)

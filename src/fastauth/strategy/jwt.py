@@ -1,27 +1,35 @@
 from datetime import datetime, timedelta, timezone
-from typing import Callable
+from typing import Callable, Any
 
 import jwt
 from fastapi import Request, Response
-
+from ..exceptions import InvalidTokenException, TokenExpiredException
 
 class JWTStrategy:
     def __init__(
         self,
         secret: str,
         algorithm: str = "HS256",
-        set_refresh_cookie: bool = True,
+        use_cookie: bool = True,
         get_additional_claims: Callable[[None], dict[str, str]] = lambda: {},
         refresh_ttl_seconds: int = 604800,
     ):
         self.secret = secret
         self.algorithm = algorithm
         self.refresh_ttl_seconds = refresh_ttl_seconds
-        self.set_refresh_cookie = set_refresh_cookie
+        self.use_cookie = use_cookie
         self.get_additional_claims = get_additional_claims
 
+    async def verify(self, token: str) -> dict[str, Any]:
+        try:
+            return jwt.decode(token, self.secret, algorithms=[self.algorithm])
+        except jwt.ExpiredSignatureError as e:
+            raise TokenExpiredException(e)
+        except jwt.InvalidTokenError as e:
+            raise InvalidTokenException(e)
+
     async def issue(
-        self, response: Response, data: dict, ttl_seconds: int
+        self, response: Response, data: dict[str, Any], ttl_seconds: int
     ) -> dict[str, str]:
         claims = self.get_additional_claims() | data
 
@@ -44,7 +52,7 @@ class JWTStrategy:
         )
 
         # set refresh token cookie
-        if self.set_refresh_cookie:
+        if self.use_cookie:
             response.set_cookie(
                 key="refresh-token",
                 value=refresh_token,
@@ -56,9 +64,18 @@ class JWTStrategy:
 
         return {"access_token": access_token, "refresh_token": refresh_token}
 
-    async def extract(self, request: Request) -> str | None:
-        pass
+    async def extract(self, request: Request) -> dict[str, Any] | None:
+        token: str | None = None
+        if self.use_cookie:
+            token = request.cookies.get("refresh-token")
+            if not token:
+                return None
+        else:
+            token = request.headers.get("Authorization")
+            if not token:
+                return None
+        return await self.verify(token)
 
     async def revoke(self, response: Response) -> None:
-        if self.set_refresh_cookie:
+        if self.use_cookie:
             response.delete_cookie("refresh-token")

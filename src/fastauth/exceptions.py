@@ -13,16 +13,16 @@ class MissingLoginFieldsException(HTTPException):
         super().__init__(status_code=400, detail=f"Missing login fields: {str(e)}")
 
 
-class InvalidPasswordException(HTTPException):
+class InvalidCredentialsException(HTTPException):
     """
-    Thrown when the password is invalid
+    Thrown when the credentials are invalid
     Status code: 400
     """
 
     def __init__(
-        self, e: Exception = Exception("There was an error validating the password")
+        self, e: Exception = Exception("There was an error validating the credentials")
     ):
-        super().__init__(status_code=400, detail=f"Invalid password: {str(e)}")
+        super().__init__(status_code=400, detail=f"Invalid credentials: {str(e)}")
 
 
 class UserNotFoundException(HTTPException):
@@ -99,3 +99,31 @@ class FailedToLogoutException(HTTPException):
         self, e: Exception = Exception("There was an unexpected error logging out")
     ):
         super().__init__(status_code=500, detail=f"Failed to logout: {str(e)}")
+
+
+class InvalidTokenException(HTTPException):
+    """
+    Thrown when the token is invalid
+    Status code: 401
+    """
+    def __init__(self, e: Exception = Exception("Invalid token")):
+        super().__init__(status_code=401, detail=f"Invalid token: {str(e)}")
+
+
+class TokenExpiredException(HTTPException):
+    """
+    Thrown when the token is expired
+    Status code: 401
+    """
+    def __init__(self, e: Exception = Exception("Token expired")):
+        super().__init__(status_code=401, detail=f"Token expired: {str(e)}")
+
+
+class FailedToVerifyTokenException(HTTPException):
+    """
+    Thrown when the token could not be verified
+    Status code: 500
+    """
+
+    def __init__(self, e: Exception = Exception("Could not verify token")):
+        super().__init__(status_code=500, detail=f"Failed to verify token: {str(e)}")

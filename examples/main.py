@@ -99,6 +99,12 @@ async def test(req: Request):
     return JSONResponse(content={"cookies": req.cookies, "headers": dict(req.headers)})
 
 
+from fastapi import Depends
+
+@auth_route.get("/verify")
+async def verify(user: AppUser = Depends(auth_manager.current_user)):
+    return user
+
 def init_routers(app_: FastAPI) -> None:
     app_.include_router(auth_route)
 

@@ -11,7 +11,7 @@ from ..exceptions import (FailedToCreateSessionException,
                           FailedToCreateUserException,
                           FailedToIssueTokenException, FailedToLoginException,
                           FailedToLogoutException, FailedToSignUpException,
-                          InvalidPasswordException,
+                          InvalidCredentialsException,
                           MissingLoginFieldsException, UserNotFoundException)
 from ..users.base import BaseUser
 
@@ -68,8 +68,10 @@ def build_auth_router(auth: "AuthManager") -> APIRouter:
                 raise MissingLoginFieldsException()
 
             # validate password
-            if not auth.config.password_validator(password):
-                raise InvalidPasswordException()
+            try:
+                auth.config.password_validator(form.password)
+            except Exception as e:
+                raise InvalidCredentialsException(e)
 
             # hash password
             hashed_password = hash_password(password)
@@ -115,7 +117,7 @@ def build_auth_router(auth: "AuthManager") -> APIRouter:
             try:
                 auth.config.password_validator(form.password)
             except Exception as e:
-                raise InvalidPasswordException(e)
+                raise InvalidCredentialsException(e)
 
             # find user
             user = await auth.user.find(**form.model_dump(exclude={"password"}))
@@ -124,7 +126,7 @@ def build_auth_router(auth: "AuthManager") -> APIRouter:
 
             # verify password
             if not verify_password(form.password, user.password):
-                raise InvalidPasswordException(Exception("Passwords do not match"))
+                raise InvalidCredentialsException(Exception("Passwords do not match"))
 
             # issue tokens
             token = await issue_tokens(request, response, user)
