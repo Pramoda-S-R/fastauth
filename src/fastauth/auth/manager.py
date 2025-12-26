@@ -28,7 +28,8 @@ class AuthManager:
 
         for field in self.config.login_fields:
             if field not in self.schema.model_fields:
-                 raise ValueError(f"Login field '{field}' is not in the user schema")
+                raise ValueError(f"Login field '{field}' is not in the user schema")
 
         from fastauth.api.router import build_auth_router
+
         self.router = build_auth_router(self)

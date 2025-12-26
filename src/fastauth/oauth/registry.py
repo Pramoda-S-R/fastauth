@@ -5,8 +5,10 @@ from .base import OAuthProvider
 
 _PROVIDERS: Dict[str, Type[OAuthProvider]] = {}
 
+
 def register_provider(provider: Type[OAuthProvider]) -> None:
     _PROVIDERS[provider.name] = provider
+
 
 def get_provider(name: str, **kwargs) -> OAuthProvider:
     provider_cls = _PROVIDERS[name]

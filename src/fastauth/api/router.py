@@ -13,18 +13,26 @@ from ..exceptions import (FailedToCreateSessionException,
                           FailedToLogoutException, FailedToSignUpException,
                           InvalidPasswordException,
                           MissingLoginFieldsException, UserNotFoundException)
+from ..users.base import BaseUser
 
 if TYPE_CHECKING:
     from ..auth.manager import AuthManager
+
 
 def build_auth_router(auth: "AuthManager") -> APIRouter:
     router = APIRouter(prefix="/auth", tags=["Auth"])
 
     # Helper functions
-    async def issue_tokens(response: Response, user):
+    async def issue_tokens(request: Request, response: Response, user: BaseUser):
+        session_id: str | None = None
+        ua = request.headers.get("user-agent")
+        lang = request.headers.get("accept-language")
+        ip = request.client.host
+        print(ua, lang, ip)
         try:
             if auth.session:
-                session_id = await auth.session.create(user.id, user.model_dump(exclude={"password", "id"}))
+                session_data = {}
+                session_id = await auth.session.create(user.id, session_data)
         except Exception as e:
             raise FailedToCreateSessionException(e)
 
@@ -33,7 +41,9 @@ def build_auth_router(auth: "AuthManager") -> APIRouter:
             claims = {"sub": user.id, "jti": jti}
             if session_id:
                 claims.update({"sid": session_id})
-            token = await auth.strategy.issue(response, claims, auth.config.session_ttl_seconds)
+            token = await auth.strategy.issue(
+                response, claims, auth.config.session_ttl_seconds
+            )
         except Exception as e:
             raise FailedToIssueTokenException(e)
 
@@ -43,14 +53,15 @@ def build_auth_router(auth: "AuthManager") -> APIRouter:
         id: str
         access_token: Optional[str] = None
         refresh_token: Optional[str] = None
-        
 
     @router.post("/signup", response_model=SignUpResponse, status_code=201)
-    async def signup(req: auth.config.signup_request, response: Response):
+    async def signup(
+        form: auth.config.signup_request, request: Request, response: Response
+    ):
         try:
             # extract password
-            password = req.password
-            user_data = req.model_dump(exclude={"password"})
+            password = form.password
+            user_data = form.model_dump(exclude={"password"})
 
             # validate login fields
             if not any(field in user_data for field in auth.config.login_fields):
@@ -72,7 +83,7 @@ def build_auth_router(auth: "AuthManager") -> APIRouter:
 
             # login after signup
             if auth.config.login_after_signup:
-                token = await issue_tokens(response, user)
+                token = await issue_tokens(request, response, user)
 
             response_data = user.model_dump(exclude={"password"})
             if auth.config.login_after_signup and token is not None:
@@ -89,29 +100,34 @@ def build_auth_router(auth: "AuthManager") -> APIRouter:
             raise FailedToSignUpException(e)
 
     @router.post("/login")
-    async def login(req: auth.config.login_request, response: Response):
+    async def login(
+        form: auth.config.login_request, request: Request, response: Response
+    ):
         try:
             # validate login fields
-            if not any(field in req.model_dump(exclude={"password"}) for field in auth.config.login_fields):
+            if not any(
+                field in form.model_dump(exclude={"password"})
+                for field in auth.config.login_fields
+            ):
                 raise MissingLoginFieldsException()
 
             # validate password
             try:
-                auth.config.password_validator(req.password)
+                auth.config.password_validator(form.password)
             except Exception as e:
                 raise InvalidPasswordException(e)
 
             # find user
-            user = await auth.user.find(**req.model_dump(exclude={"password"}))
+            user = await auth.user.find(**form.model_dump(exclude={"password"}))
             if not user:
                 raise UserNotFoundException()
 
             # verify password
-            if not verify_password(req.password, user.password):
+            if not verify_password(form.password, user.password):
                 raise InvalidPasswordException(Exception("Passwords do not match"))
 
             # issue tokens
-            token = await issue_tokens(response, user)
+            token = await issue_tokens(request, response, user)
 
             # prepare response
             response_data = user.model_dump(exclude={"password"})
@@ -137,10 +153,9 @@ def build_auth_router(auth: "AuthManager") -> APIRouter:
             raise FailedToLogoutException(e)
 
     if auth.oauth:
+
         @router.get("/oauth/{provider}")
         async def oauth_login(provider: str):
-            return RedirectResponse(
-                auth.oauth.get_authorization_url()
-            )
+            return RedirectResponse(auth.oauth.get_authorization_url())
 
     return router

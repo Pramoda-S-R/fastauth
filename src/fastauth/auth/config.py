@@ -6,10 +6,8 @@ from pydantic import BaseModel, StringConstraints, field_validator
 
 from .models import LoginRequest, SignupRequest
 
-LowerSnakeStr = Annotated[
-    str,
-    StringConstraints(pattern=r'^[a-z_]+$')
-]
+LowerSnakeStr = Annotated[str, StringConstraints(pattern=r"^[a-z_]+$")]
+
 
 class AuthConfig(BaseModel):
     slug: LowerSnakeStr
@@ -39,8 +37,6 @@ class AuthConfig(BaseModel):
 
         missing = required_fields - model_fields.keys()
         if missing:
-            raise ValueError(
-                f"signup_request is missing required fields: {missing}"
-            )
+            raise ValueError(f"signup_request is missing required fields: {missing}")
 
         return model_cls

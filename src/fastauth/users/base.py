@@ -9,6 +9,7 @@ class BaseUser(BaseModel):
     password: str
     model_config = ConfigDict(extra="allow")
 
+
 class UserStore(Protocol):
     async def create(self, **kwargs) -> BaseUser: ...
     async def find(self, **kwargs) -> BaseUser | None: ...
