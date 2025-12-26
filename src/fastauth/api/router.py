@@ -3,7 +3,7 @@ import json
 import uuid
 from typing import TYPE_CHECKING, Optional
 
-from fastapi import APIRouter, HTTPException, Request, Response
+from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from fastapi.responses import RedirectResponse
 
 from ..crypto import hash_password, verify_password
@@ -29,15 +29,17 @@ def build_auth_router(auth: "AuthManager") -> APIRouter:
         lang = request.headers.get("accept-language")
         ip = request.client.host
         print(ua, lang, ip)
+
+        jti = str(uuid.uuid4())
+
         try:
             if auth.session:
-                session_data = {}
+                session_data = {"jti": jti}
                 session_id = await auth.session.create(user.id, session_data)
         except Exception as e:
             raise FailedToCreateSessionException(e)
 
         try:
-            jti = str(uuid.uuid4())
             claims = {"sub": user.id, "jti": jti}
             if session_id:
                 claims.update({"sid": session_id})
@@ -113,12 +115,6 @@ def build_auth_router(auth: "AuthManager") -> APIRouter:
             ):
                 raise MissingLoginFieldsException()
 
-            # validate password
-            try:
-                auth.config.password_validator(form.password)
-            except Exception as e:
-                raise InvalidCredentialsException(e)
-
             # find user
             user = await auth.user.find(**form.model_dump(exclude={"password"}))
             if not user:
@@ -145,10 +141,18 @@ def build_auth_router(auth: "AuthManager") -> APIRouter:
                 raise e
             raise FailedToLoginException(e)
 
-    @router.post("/logout")
-    async def logout(request: Request, response: Response):
+    @router.post("/logout", status_code=204)
+    async def logout(
+        response: Response,
+        session_id: str = Depends(auth.current_session),
+    ):
         try:
-            pass
+            if auth.session:
+                await auth.session.delete(session_id)
+            await auth.strategy.revoke(response)
+
+            response.status_code = 204
+            return response
         except Exception as e:
             if issubclass(e.__class__, HTTPException):
                 raise e

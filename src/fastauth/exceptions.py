@@ -129,3 +129,13 @@ class FailedToVerifyTokenException(HTTPException):
 
     def __init__(self, e: Exception = Exception("Could not verify token")):
         super().__init__(status_code=500, detail=f"Failed to verify token: {str(e)}")
+
+
+class FailedToVerifySessionException(HTTPException):
+    """
+    Thrown when the session could not be verified
+    Status code: 500
+    """
+
+    def __init__(self, e: Exception = Exception("Could not verify session")):
+        super().__init__(status_code=500, detail=f"Failed to verify session: {str(e)}")
