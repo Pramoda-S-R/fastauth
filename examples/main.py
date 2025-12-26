@@ -1,7 +1,7 @@
 import uuid
 from typing import List, Optional
 
-from fastapi import FastAPI, Request, Response
+from fastapi import Depends, FastAPI, Request
 from fastapi.middleware import Middleware
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -10,7 +10,7 @@ from pydantic import BaseModel
 from fastauth.auth.config import AuthConfig
 from fastauth.auth.manager import AuthManager
 from fastauth.sessions.memory import MemorySessionStore
-from fastauth.tokens.jwt import JWTStrategy
+from fastauth.strategy.jwt import JWTStrategy
 
 origins = ["*"]
 
@@ -87,7 +87,7 @@ auth_manager = AuthManager(
     ),
     user_store=User(),
     session_store=MemorySessionStore(),
-    strategy=JWTStrategy(secret="opensrc4lyf", algorithm="HS256"),
+    strategy=JWTStrategy(secret="opensrc4lyf", algorithm="HS256", use_cookie=False),
     schema=AppUser,
 )
 
@@ -99,11 +99,10 @@ async def test(req: Request):
     return JSONResponse(content={"cookies": req.cookies, "headers": dict(req.headers)})
 
 
-from fastapi import Depends
-
 @auth_route.get("/verify")
 async def verify(user: AppUser = Depends(auth_manager.current_user)):
     return user
+
 
 def init_routers(app_: FastAPI) -> None:
     app_.include_router(auth_route)

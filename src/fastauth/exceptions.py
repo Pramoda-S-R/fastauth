@@ -106,6 +106,7 @@ class InvalidTokenException(HTTPException):
     Thrown when the token is invalid
     Status code: 401
     """
+
     def __init__(self, e: Exception = Exception("Invalid token")):
         super().__init__(status_code=401, detail=f"Invalid token: {str(e)}")
 
@@ -115,6 +116,7 @@ class TokenExpiredException(HTTPException):
     Thrown when the token is expired
     Status code: 401
     """
+
     def __init__(self, e: Exception = Exception("Token expired")):
         super().__init__(status_code=401, detail=f"Token expired: {str(e)}")
 

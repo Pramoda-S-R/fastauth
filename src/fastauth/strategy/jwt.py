@@ -1,9 +1,12 @@
 from datetime import datetime, timedelta, timezone
-from typing import Callable, Any
+from typing import Any, Callable
 
 import jwt
 from fastapi import Request, Response
+from fastapi.security import HTTPBearer
+
 from ..exceptions import InvalidTokenException, TokenExpiredException
+
 
 class JWTStrategy:
     def __init__(
@@ -19,6 +22,7 @@ class JWTStrategy:
         self.refresh_ttl_seconds = refresh_ttl_seconds
         self.use_cookie = use_cookie
         self.get_additional_claims = get_additional_claims
+        self._security = HTTPBearer()
 
     async def verify(self, token: str) -> dict[str, Any]:
         try:
@@ -30,7 +34,7 @@ class JWTStrategy:
 
     async def issue(
         self, response: Response, data: dict[str, Any], ttl_seconds: int
-    ) -> dict[str, str]:
+    ) -> dict[str, str] | None:
         claims = self.get_additional_claims() | data
 
         issued_at = datetime.now(timezone.utc)
@@ -61,19 +65,25 @@ class JWTStrategy:
                 secure=True,
                 samesite="lax",
             )
-
-        return {"access_token": access_token, "refresh_token": refresh_token}
+            return None
+        else:
+            return {"access_token": access_token, "refresh_token": refresh_token}
 
     async def extract(self, request: Request) -> dict[str, Any] | None:
         token: str | None = None
+
         if self.use_cookie:
             token = request.cookies.get("refresh-token")
-            if not token:
-                return None
         else:
-            token = request.headers.get("Authorization")
-            if not token:
-                return None
+            authorization = request.headers.get("Authorization")
+            if authorization:
+                scheme, _, param = authorization.partition(" ")
+                if scheme.lower() == "bearer":
+                    token = param
+
+        if not token:
+            return None
+
         return await self.verify(token)
 
     async def revoke(self, response: Response) -> None:

@@ -1,5 +1,5 @@
 # tokens/base.py
-from typing import Protocol, Any
+from typing import Any, Protocol
 
 from fastapi import Request, Response
 
