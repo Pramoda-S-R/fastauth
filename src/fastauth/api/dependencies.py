@@ -45,20 +45,19 @@ def get_current_user_dependency(
             try:
                 session_data = await auth.session.get(session_id)
             except Exception as e:
-                # unknown error
                 raise FailedToVerifySessionException(e)
             if not session_data:
-                # session not found
                 raise InvalidCredentialsException()
             session_user_id = session_data.get("user_id")
             if session_user_id != user_id:
-                # session user id does not match
                 raise InvalidCredentialsException()
 
         user = await auth.user.get(user_id)
         if not user:
-            # user not found
             raise UserNotFoundException()
+
+        # rotate jti
+
         return user
 
     if use_bearer:

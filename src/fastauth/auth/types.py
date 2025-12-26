@@ -1,42 +1,68 @@
-# fastauth/types.py
-from datetime import datetime, timedelta
-from typing import Any, Awaitable, Optional, Protocol, Union
+from datetime import timedelta
+from typing import Optional, Protocol, Set, Union, runtime_checkable
 
-EncodedT = Union[bytes, bytearray, memoryview]
-DecodedT = Union[str, int, float]
-EncodableT = Union[EncodedT, DecodedT]
-KeyT = Union[bytes, str, memoryview]
+# -----------------
+# Basic Types
+# -----------------
+
+KeyT = Union[str, bytes]
+ValueT = Union[str, bytes]
 ExpiryT = Union[int, timedelta]
-AbsExpiryT = Union[int, datetime]
-ResponseT = Union[Awaitable[Any], Any]
 
 
-class Redis(Protocol):
+# -----------------
+# Pipeline Protocol
+# -----------------
+
+
+@runtime_checkable
+class Pipeline(Protocol):
+    # async context manager
+    async def __aenter__(self) -> "Pipeline": ...
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc: BaseException | None,
+        tb: object | None,
+    ) -> None: ...
+
+    # commands used
     def set(
         self,
-        name: KeyT,
-        value: EncodableT,
+        key: KeyT,
+        value: ValueT,
+        *,
         ex: Optional[ExpiryT] = None,
-        px: Optional[ExpiryT] = None,
-        nx: bool = False,
-        xx: bool = False,
-        keepttl: bool = False,
-        get: bool = False,
-        exat: Optional[AbsExpiryT] = None,
-        pxat: Optional[AbsExpiryT] = None,
-        ifeq: Optional[Union[bytes, str]] = None,
-        ifne: Optional[Union[bytes, str]] = None,
-        ifdeq: Optional[str] = None,  # hex digest of current value
-        ifdne: Optional[str] = None,  # hex digest of current value
-    ) -> ResponseT: ...
-    def get(self, key: KeyT) -> ResponseT: ...
-    def delete(self, *keys: KeyT) -> ResponseT: ...
-    def expire(
+    ) -> "Pipeline": ...
+
+    def sadd(self, key: KeyT, value: ValueT) -> "Pipeline": ...
+    def srem(self, key: KeyT, value: ValueT) -> "Pipeline": ...
+    def delete(self, key: KeyT) -> "Pipeline": ...
+
+    async def execute(self) -> list[object]: ...
+
+
+# -----------------
+# Redis Protocol
+# -----------------
+
+
+@runtime_checkable
+class Redis(Protocol):
+    async def get(self, key: KeyT) -> Optional[bytes]: ...
+
+    async def set(
         self,
-        name: KeyT,
-        time: ExpiryT,
-        nx: bool = False,
-        xx: bool = False,
-        gt: bool = False,
-        lt: bool = False,
-    ) -> ResponseT: ...
+        key: KeyT,
+        value: ValueT,
+        *,
+        ex: Optional[ExpiryT] = None,
+    ) -> bool: ...
+
+    async def delete(self, key: KeyT) -> int: ...
+
+    async def sadd(self, key: KeyT, value: ValueT) -> int: ...
+    async def srem(self, key: KeyT, value: ValueT) -> int: ...
+    async def smembers(self, key: KeyT) -> Set[bytes]: ...
+
+    def pipeline(self, transaction: bool = True) -> Pipeline: ...

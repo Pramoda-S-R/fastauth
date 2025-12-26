@@ -35,7 +35,11 @@ def build_auth_router(auth: "AuthManager") -> APIRouter:
         try:
             if auth.session:
                 session_data = {"jti": jti}
-                session_id = await auth.session.create(user.id, session_data)
+                session_id = await auth.session.create(
+                    user_id=user.id,
+                    data=session_data,
+                    ttl=auth.config.session_ttl_seconds,
+                )
         except Exception as e:
             raise FailedToCreateSessionException(e)
 

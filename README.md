@@ -33,3 +33,11 @@ Auth
  ├─ AuditEmitter
  └─ SecuritySignals
 ```
+
+### Issues
+- [ ] redis set contains expired keys need a batch job or something to clean them up
+- [ ] not tracking user agent and other device fingerprint information
+- [ ] not implemented jti rotation on refresh
+- [ ] can't decide if a token store is required or not for reuse and replay detection
+- [ ] need to implement csrf protection and session_hint cookie
+

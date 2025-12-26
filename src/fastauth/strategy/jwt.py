@@ -72,12 +72,12 @@ class JWTStrategy:
             refresh_claims, self.secret, algorithm=self.algorithm
         )
 
-        # set refresh token cookie TODO: make this configurable and switch to short lived access token
+        # set refresh token cookie
         if self.use_cookie:
             response.set_cookie(
                 key=self.cookie_name,
                 value=access_token,
-                max_age=self.refresh_ttl_seconds,
+                max_age=ttl_seconds,
                 httponly=True,
                 secure=True,
                 samesite="lax",
