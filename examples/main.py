@@ -42,6 +42,11 @@ class SignupRequest(BaseModel):
     password: str
 
 
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+
 class User:
     def __init__(self):
         self.store = {}
@@ -82,7 +87,7 @@ auth_manager = AuthManager(
         auth_mode="token",
         login_fields=["username", "email"],
         signup_request=SignupRequest,
-        # login_request=SignupRequest,
+        login_request=LoginRequest,
         login_after_signup=False,
     ),
     user_store=User(),

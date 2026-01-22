@@ -7,12 +7,8 @@ from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from fastapi.responses import RedirectResponse
 
 from ..crypto import hash_password, verify_password
-from ..exceptions import (FailedToCreateSessionException,
-                          FailedToCreateUserException,
-                          FailedToIssueTokenException, FailedToLoginException,
-                          FailedToLogoutException, FailedToSignUpException,
-                          InvalidCredentialsException,
-                          MissingLoginFieldsException, UserNotFoundException)
+from ..exceptions import (LoginException, LogoutException, SessionException,
+                          SignUpException, TokenException, UserException)
 from ..users.base import BaseUser
 
 if TYPE_CHECKING:
@@ -41,7 +37,7 @@ def build_auth_router(auth: "AuthManager") -> APIRouter:
                     ttl=auth.config.session_ttl_seconds,
                 )
         except Exception as e:
-            raise FailedToCreateSessionException(e)
+            raise SessionException(e)
 
         try:
             claims = {"sub": user.id, "jti": jti}
@@ -51,7 +47,7 @@ def build_auth_router(auth: "AuthManager") -> APIRouter:
                 response, claims, auth.config.session_ttl_seconds
             )
         except Exception as e:
-            raise FailedToIssueTokenException(e)
+            raise TokenException(e)
 
         return token
 
@@ -71,13 +67,13 @@ def build_auth_router(auth: "AuthManager") -> APIRouter:
 
             # validate login fields
             if not any(field in user_data for field in auth.config.login_fields):
-                raise MissingLoginFieldsException()
+                raise SignUpException()
 
             # validate password
             try:
                 auth.config.password_validator(form.password)
             except Exception as e:
-                raise InvalidCredentialsException(e)
+                raise SignUpException(e)
 
             # hash password
             hashed_password = hash_password(password)
@@ -87,7 +83,7 @@ def build_auth_router(auth: "AuthManager") -> APIRouter:
             try:
                 user = await auth.user.create(**user_data)
             except Exception as e:
-                raise FailedToCreateUserException(e)
+                raise UserException(e)
 
             # login after signup
             if auth.config.login_after_signup:
@@ -105,7 +101,7 @@ def build_auth_router(auth: "AuthManager") -> APIRouter:
         except Exception as e:
             if issubclass(e.__class__, HTTPException):
                 raise e
-            raise FailedToSignUpException(e)
+            raise SignUpException(e)
 
     @router.post("/login")
     async def login(
@@ -117,16 +113,16 @@ def build_auth_router(auth: "AuthManager") -> APIRouter:
                 field in form.model_dump(exclude={"password"})
                 for field in auth.config.login_fields
             ):
-                raise MissingLoginFieldsException()
+                raise LoginException()
 
             # find user
             user = await auth.user.find(**form.model_dump(exclude={"password"}))
             if not user:
-                raise UserNotFoundException()
+                raise UserException()
 
             # verify password
             if not verify_password(form.password, user.password):
-                raise InvalidCredentialsException(Exception("Passwords do not match"))
+                raise LoginException()
 
             # issue tokens
             token = await issue_tokens(request, response, user)
@@ -143,7 +139,7 @@ def build_auth_router(auth: "AuthManager") -> APIRouter:
         except Exception as e:
             if issubclass(e.__class__, HTTPException):
                 raise e
-            raise FailedToLoginException(e)
+            raise LoginException(e)
 
     @router.post("/logout", status_code=204)
     async def logout(
@@ -160,7 +156,7 @@ def build_auth_router(auth: "AuthManager") -> APIRouter:
         except Exception as e:
             if issubclass(e.__class__, HTTPException):
                 raise e
-            raise FailedToLogoutException(e)
+            raise LogoutException(e)
 
     if auth.oauth:
 

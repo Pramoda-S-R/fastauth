@@ -3,9 +3,8 @@ from typing import TYPE_CHECKING, Any, Callable, Coroutine, Optional
 from fastapi import HTTPException, Request, Security
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
-from ..exceptions import (FailedToVerifySessionException,
-                          FailedToVerifyTokenException,
-                          InvalidCredentialsException, UserNotFoundException)
+from ..exceptions import (CredentialsException, SessionException,
+                          TokenException, UserException)
 
 if TYPE_CHECKING:
     from ..auth.manager import AuthManager
@@ -26,35 +25,35 @@ def get_current_user_dependency(
         try:
             credentials = await auth.strategy.extract(request)
             if not credentials:
-                raise InvalidCredentialsException(
+                raise CredentialsException(
                     Exception("Received Empty or Invalid Credentials")
                 )
         except HTTPException as e:
             raise e
         except Exception as e:
-            raise FailedToVerifyTokenException(e)
+            raise TokenException(e)
 
         user_id = credentials.get("sub") or credentials.get("user_id")
         if not user_id:
-            raise InvalidCredentialsException()
+            raise CredentialsException()
 
         if auth.session:
             session_id = credentials.get("sid")
             if not session_id:
-                raise InvalidCredentialsException()
+                raise CredentialsException()
             try:
                 session_data = await auth.session.get(session_id)
             except Exception as e:
-                raise FailedToVerifySessionException(e)
+                raise SessionException(e)
             if not session_data:
-                raise InvalidCredentialsException()
+                raise CredentialsException()
             session_user_id = session_data.get("user_id")
             if session_user_id != user_id:
-                raise InvalidCredentialsException()
+                raise CredentialsException()
 
         user = await auth.user.get(user_id)
         if not user:
-            raise UserNotFoundException()
+            raise UserException(Exception("User not found"))
 
         # rotate jti
 
@@ -88,13 +87,13 @@ def get_current_session_dependency(
         try:
             credentials = await auth.strategy.extract(request)
             if not credentials:
-                raise InvalidCredentialsException(
+                raise CredentialsException(
                     Exception("Received Empty or Invalid Credentials")
                 )
         except HTTPException as e:
             raise e
         except Exception as e:
-            raise FailedToVerifyTokenException(e)
+            raise TokenException(e)
 
         return credentials.get("sid")
 

@@ -4,7 +4,7 @@ from typing import Any, Callable, Pattern, Union
 import jwt
 from fastapi import Request, Response
 
-from ..exceptions import InvalidTokenException, TokenExpiredException
+from ..exceptions import TokenException
 
 
 class JWTStrategy:
@@ -45,9 +45,9 @@ class JWTStrategy:
                 options={"verify_exp": not allow_expired},
             )
         except jwt.ExpiredSignatureError as e:
-            raise TokenExpiredException(e)
+            raise TokenException(e)
         except jwt.InvalidTokenError as e:
-            raise InvalidTokenException(e)
+            raise TokenException(e)
 
     async def issue(
         self, response: Response, data: dict[str, Any], ttl_seconds: int

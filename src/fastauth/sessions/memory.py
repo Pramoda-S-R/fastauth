@@ -7,7 +7,7 @@ class MemorySessionStore:
     def __init__(self):
         self.store = {}
 
-    async def create(self, user_id: str, data: dict[str, Any]) -> str:
+    async def create(self, user_id: str, data: dict[str, Any], **kwargs) -> str:
         session_id = uuid.uuid4().hex
         self.store[session_id] = {
             "user_id": user_id,
@@ -29,6 +29,6 @@ class MemorySessionStore:
         if session_id in self.store:
             del self.store[session_id]
 
-    async def refresh(self, session_id: str) -> None:
+    async def refresh(self, session_id: str, **kwargs) -> None:
         if session_id in self.store:
             self.store[session_id]["updated_at"] = datetime.now(timezone.utc)
