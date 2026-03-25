@@ -10,7 +10,7 @@ from pydantic import BaseModel
 from fastauth.auth.config import AuthConfig
 from fastauth.auth.manager import AuthManager
 from fastauth.sessions.memory import MemorySessionStore
-from fastauth.strategy.jwt import JWTStrategy
+from fastauth.strategy.opaque import OpaqueStrategy
 
 origins = ["*"]
 
@@ -92,7 +92,8 @@ auth_manager = AuthManager(
     ),
     user_store=User(),
     session_store=MemorySessionStore(),
-    strategy=JWTStrategy(secret="opensrc4lyf", algorithm="HS256", use_cookie=False),
+    # strategy=JWTStrategy(secret="opensrc4lyf", algorithm="HS256", use_cookie=False),
+    strategy=OpaqueStrategy(),
     schema=AppUser,
 )
 

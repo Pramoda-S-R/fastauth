@@ -1,14 +1,28 @@
-# api/router.py
-import json
-import uuid
-from typing import TYPE_CHECKING, Optional
+"""
+FastAPI router for authentication endpoints.
 
-from fastapi import APIRouter, Depends, HTTPException, Request, Response
-from fastapi.responses import RedirectResponse
+Provides:
+- POST /auth/signup - User registration
+- POST /auth/login - User login
+- POST /auth/logout - User logout
+- GET /auth/oauth/{provider} - OAuth login redirect
+"""
+
+import uuid
+from typing import TYPE_CHECKING, Any, Optional
+
+from fastapi import APIRouter, Depends, Request, Response
 
 from ..crypto import hash_password, verify_password
-from ..exceptions import (LoginException, LogoutException, SessionException,
-                          SignUpException, TokenException, UserException)
+from ..exceptions import (
+    LoginException,
+    LogoutException,
+    SessionException,
+    SignUpException,
+    TokenException,
+    UserException,
+)
+from ..utils import get_accept_language, get_client_ip, get_user_agent
 from ..users.base import BaseUser
 
 if TYPE_CHECKING:
@@ -16,152 +30,192 @@ if TYPE_CHECKING:
 
 
 def build_auth_router(auth: "AuthManager") -> APIRouter:
-    router = APIRouter(prefix="/auth", tags=["Auth"])
+    """Build and configure the authentication router.
 
-    # Helper functions
-    async def issue_tokens(request: Request, response: Response, user: BaseUser):
-        session_id: str | None = None
-        ua = request.headers.get("user-agent")
-        lang = request.headers.get("accept-language")
-        ip = request.client.host
-        print(ua, lang, ip)
+    Creates endpoints for signup, login, logout, and OAuth.
+    Uses the provided AuthManager for business logic.
+    """
+    router = APIRouter(prefix="/auth", tags=["Authentication"])
 
+    async def _issue_tokens(
+        request: Request, response: Response, user: BaseUser
+    ) -> Optional[dict[str, str]]:
+        """Issue authentication tokens for a user.
+
+        Creates a session (if session store configured) and issues
+        tokens via the configured strategy.
+
+        Args:
+            request: FastAPI request for metadata extraction
+            response: FastAPI response for setting cookies
+            user: Authenticated user to issue tokens for
+
+        Returns:
+            Token dict if not using cookies, None otherwise
+        """
+        # Extract request metadata for audit logging
+        user_agent = get_user_agent(request)
+        accept_language = get_accept_language(request)
+        client_ip = get_client_ip(request)
+
+        # Generate unique token identifier
         jti = str(uuid.uuid4())
 
-        try:
-            if auth.session:
-                session_data = {"jti": jti}
+        # Get user ID (must exist at this point)
+        user_id = user.id
+        if not user_id:
+            raise UserException("User ID is missing", status_code=500)
+
+        # Create session if session store is configured
+        session_id: Optional[str] = None
+        if auth.session:
+            try:
+                session_data = {"jti": jti, "user_agent": user_agent, "ip": client_ip}
+                from pprint import pprint
+                pprint(session_data)
                 session_id = await auth.session.create(
-                    user_id=user.id,
+                    user_id=user_id,
                     data=session_data,
                     ttl=auth.config.session_ttl_seconds,
                 )
-        except Exception as e:
-            raise SessionException(e)
+            except Exception as e:
+                raise SessionException(str(e))
 
+        # Issue tokens via strategy
         try:
-            claims = {"sub": user.id, "jti": jti}
+            claims = {"sub": user_id, "jti": jti}
             if session_id:
-                claims.update({"sid": session_id})
+                claims["sid"] = session_id
             token = await auth.strategy.issue(
                 response, claims, auth.config.session_ttl_seconds
             )
         except Exception as e:
-            raise TokenException(e)
+            raise TokenException(str(e))
 
         return token
 
-    class SignUpResponse(auth.config.signup_request):
-        id: str
-        access_token: Optional[str] = None
-        refresh_token: Optional[str] = None
+    async def _build_user_response(
+        user: BaseUser, token: Optional[dict[str, str]] = None
+    ) -> dict[str, Any]:
+        """Build response data from user model.
 
-    @router.post("/signup", response_model=SignUpResponse, status_code=201)
+        Args:
+            user: User model to convert
+            token: Optional token to include in response
+
+        Returns:
+            Dict suitable for JSON response
+        """
+        response_data = user.model_dump(exclude={"password"})
+        if token:
+            response_data.update(token)
+        return response_data
+
+    @router.post("/signup", status_code=201)
     async def signup(
-        form: auth.config.signup_request, request: Request, response: Response
+        form: auth.config.signup_request,
+        request: Request,
+        response: Response,
     ):
+        """Register a new user account.
+
+        Validates password, hashes it, creates user, and optionally logs in.
+        """
         try:
-            # extract password
+            # Extract password and user data
             password = form.password
             user_data = form.model_dump(exclude={"password"})
 
-            # validate login fields
+            # Validate login fields are provided
             if not any(field in user_data for field in auth.config.login_fields):
-                raise SignUpException()
+                raise SignUpException("Missing login field")
 
-            # validate password
+            # Validate password strength
             try:
-                auth.config.password_validator(form.password)
+                auth.config.password_validator(password)
             except Exception as e:
-                raise SignUpException(e)
+                raise SignUpException(f"Weak password: {str(e)}")
 
-            # hash password
+            # Hash password and create user
             hashed_password = hash_password(password)
-            user_data.update({"password": hashed_password})
+            user_data["password"] = hashed_password
 
-            # create user
             try:
                 user = await auth.user.create(**user_data)
             except Exception as e:
-                raise UserException(e)
+                raise UserException(str(e), status_code=400)
 
-            # login after signup
+            # Issue tokens if login_after_signup is enabled
+            token = None
             if auth.config.login_after_signup:
-                token = await issue_tokens(request, response, user)
+                token = await _issue_tokens(request, response, user)
 
-            response_data = user.model_dump(exclude={"password"})
-            if auth.config.login_after_signup and token is not None:
-                response_data.update(token)
+            return await _build_user_response(user, token)
 
-            response.body = json.dumps(response_data, indent=2).encode("utf-8")
-            response.headers["Content-Type"] = "application/json"
-            response.media_type = "application/json"
-            response.status_code = 201
-            return response
+        except UserException:
+            raise
+        except SignUpException:
+            raise
         except Exception as e:
-            if issubclass(e.__class__, HTTPException):
-                raise e
-            raise SignUpException(e)
+            raise SignUpException(str(e))
 
     @router.post("/login")
     async def login(
-        form: auth.config.login_request, request: Request, response: Response
+        form: auth.config.login_request,
+        request: Request,
+        response: Response,
     ):
+        """Authenticate a user and issue tokens.
+
+        Validates credentials and returns user data with tokens.
+        """
         try:
-            # validate login fields
-            if not any(
-                field in form.model_dump(exclude={"password"})
-                for field in auth.config.login_fields
-            ):
+            # Validate login fields
+            login_data = form.model_dump(exclude={"password"})
+            if not any(field in login_data for field in auth.config.login_fields):
                 raise LoginException()
 
-            # find user
-            user = await auth.user.find(**form.model_dump(exclude={"password"}))
+            # Find user by login field
+            user = await auth.user.find(**login_data)
             if not user:
-                raise UserException()
+                raise LoginException()
 
-            # verify password
+            # Verify password
             if not verify_password(form.password, user.password):
                 raise LoginException()
 
-            # issue tokens
-            token = await issue_tokens(request, response, user)
+            # Issue tokens
+            token = await _issue_tokens(request, response, user)
 
-            # prepare response
-            response_data = user.model_dump(exclude={"password"})
-            if token is not None:
-                response_data.update(token)
-            response.body = json.dumps(response_data, indent=2).encode("utf-8")
-            response.headers["Content-Type"] = "application/json"
-            response.media_type = "application/json"
-            response.status_code = 200
-            return response
+            return await _build_user_response(user, token)
+
+        except LoginException:
+            raise
         except Exception as e:
-            if issubclass(e.__class__, HTTPException):
-                raise e
-            raise LoginException(e)
+            raise LoginException(str(e))
 
     @router.post("/logout", status_code=204)
     async def logout(
         response: Response,
         session_id: str = Depends(auth.current_session),
     ):
+        """Log out the current user.
+
+        Deletes session and revokes tokens.
+        """
         try:
-            if auth.session:
+            if auth.session and session_id:
                 await auth.session.delete(session_id)
             await auth.strategy.revoke(response)
-
-            response.status_code = 204
-            return response
         except Exception as e:
-            if issubclass(e.__class__, HTTPException):
-                raise e
-            raise LogoutException(e)
+            raise LogoutException(str(e))
 
+    # OAuth routes (if OAuth provider configured)
     if auth.oauth:
 
         @router.get("/oauth/{provider}")
         async def oauth_login(provider: str):
-            return RedirectResponse(auth.oauth.get_authorization_url())
+            """Redirect to OAuth provider for authentication."""
+            return {"url": auth.oauth.get_authorization_url(provider)}
 
     return router

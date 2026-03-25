@@ -1,65 +1,79 @@
+"""
+FastAuth exception hierarchy.
+
+All exceptions inherit from HTTPException to integrate with FastAPI's
+error handling. Each exception maps to an appropriate HTTP status code.
+"""
+
 from fastapi import HTTPException
 
 
 class SignUpException(HTTPException):
-    def __init__(
-        self, e: Exception = Exception("There was an unexpected error signing up")
-    ):
-        super().__init__(
-            status_code=500, detail=f"FastAuth | Failed to sign up: {str(e)}"
-        )
+    """Raised when user signup fails.
+
+    Status: 400 Bad Request - client provided invalid input
+    """
+
+    def __init__(self, detail: str = "Failed to sign up"):
+        super().__init__(status_code=400, detail=detail)
 
 
 class LoginException(HTTPException):
-    def __init__(
-        self, e: Exception = Exception("There was an unexpected error logging in")
-    ):
-        super().__init__(
-            status_code=500, detail=f"FastAuth | Failed to login: {str(e)}"
-        )
+    """Raised when login fails due to invalid credentials.
+
+    Status: 401 Unauthorized - authentication required
+    """
+
+    def __init__(self, detail: str = "Invalid credentials"):
+        super().__init__(status_code=401, detail=detail)
 
 
 class LogoutException(HTTPException):
-    def __init__(
-        self, e: Exception = Exception("There was an unexpected error logging out")
-    ):
-        super().__init__(
-            status_code=500, detail=f"FastAuth | Failed to logout: {str(e)}"
-        )
+    """Raised when logout fails unexpectedly.
+
+    Status: 500 Internal Server Error - unexpected server error
+    """
+
+    def __init__(self, detail: str = "Failed to logout"):
+        super().__init__(status_code=500, detail=detail)
 
 
 class TokenException(HTTPException):
-    def __init__(
-        self, e: Exception = Exception("There was an unexpected error with the token")
-    ):
-        super().__init__(
-            status_code=500, detail=f"FastAuth | Failed to issue token: {str(e)}"
-        )
+    """Raised when token validation fails.
+
+    Status: 401 Unauthorized - invalid or expired token
+    """
+
+    def __init__(self, detail: str = "Invalid or expired token"):
+        super().__init__(status_code=401, detail=detail)
 
 
 class SessionException(HTTPException):
-    def __init__(
-        self, e: Exception = Exception("There was an unexpected error with the session")
-    ):
-        super().__init__(
-            status_code=500, detail=f"FastAuth | Failed to create session: {str(e)}"
-        )
+    """Raised when session validation fails.
+
+    Status: 401 Unauthorized - invalid or expired session
+    """
+
+    def __init__(self, detail: str = "Invalid or expired session"):
+        super().__init__(status_code=401, detail=detail)
 
 
 class UserException(HTTPException):
-    def __init__(
-        self, e: Exception = Exception("There was an unexpected error with the user")
-    ):
-        super().__init__(
-            status_code=500, detail=f"FastAuth | Failed User Operation: {str(e)}"
-        )
+    """Raised when user operation fails.
+
+    Status: 404 Not Found - user not found
+          400 Bad Request - user already exists or invalid input
+    """
+
+    def __init__(self, detail: str = "User operation failed", status_code: int = 404):
+        super().__init__(status_code=status_code, detail=detail)
 
 
 class CredentialsException(HTTPException):
-    def __init__(
-        self,
-        e: Exception = Exception("There was an unexpected error with the credentials"),
-    ):
-        super().__init__(
-            status_code=500, detail=f"FastAuth | Failed to verify credentials: {str(e)}"
-        )
+    """Raised when credential validation fails.
+
+    Status: 401 Unauthorized - credentials invalid or missing
+    """
+
+    def __init__(self, detail: str = "Invalid or missing credentials"):
+        super().__init__(status_code=401, detail=detail)
