@@ -7,6 +7,7 @@ extraction, and other helper functions.
 """
 
 from typing import Optional
+
 from fastapi import Request
 
 

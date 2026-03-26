@@ -16,7 +16,7 @@ class SessionStore(Protocol):
     - Getting all sessions for a user
     - Deleting sessions
     - Refreshing/updating sessions
-    
+
     Methods:
         create: Create a new session
             Args:

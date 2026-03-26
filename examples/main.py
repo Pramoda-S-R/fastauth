@@ -90,7 +90,7 @@ auth_manager = AuthManager(
         login_after_signup=False,
     ),
     user_store=User(),
-    # session_store=MemorySessionStore(),
+    session_store=MemorySessionStore(),
     # strategy=JWTStrategy(secret="opensrc4lyf", algorithm="HS256", use_cookie=False),
     strategy=OpaqueStrategy(),
     schema=AppUser,

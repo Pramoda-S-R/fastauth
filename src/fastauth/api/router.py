@@ -14,16 +14,10 @@ from typing import TYPE_CHECKING, Any, Optional
 from fastapi import APIRouter, Depends, Request, Response
 
 from ..crypto import hash_password, verify_password
-from ..exceptions import (
-    LoginException,
-    LogoutException,
-    SessionException,
-    SignUpException,
-    TokenException,
-    UserException,
-)
-from ..utils import get_accept_language, get_client_ip, get_user_agent
+from ..exceptions import (LoginException, LogoutException, SessionException,
+                          SignUpException, TokenException, UserException)
 from ..users.base import BaseUser
+from ..utils import get_accept_language, get_client_ip, get_user_agent
 
 if TYPE_CHECKING:
     from ..auth.manager import AuthManager

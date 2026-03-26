@@ -13,6 +13,7 @@ class JWTStrategy:
     Session data may or may not be stored server-side (via SessionStore), making this suitable
     for scenarios requiring stateless authentication.
     """
+
     def __init__(
         self,
         secret: str,

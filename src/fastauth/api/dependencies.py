@@ -12,12 +12,8 @@ from typing import TYPE_CHECKING, Any, Callable, Coroutine, Optional
 from fastapi import HTTPException, Request, Security
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
-from ..exceptions import (
-    CredentialsException,
-    SessionException,
-    TokenException,
-    UserException,
-)
+from ..exceptions import (CredentialsException, SessionException,
+                          TokenException, UserException)
 
 if TYPE_CHECKING:
     from ..auth.manager import AuthManager
@@ -64,6 +60,8 @@ def get_current_user_dependency(
         credentials = await _extract_credentials(request)
 
         # Extract user ID from credentials if jwt strategy
+        user_id = None
+        session_user_id = None
         if auth.is_jwt_strategy:
             user_id = credentials.get("sub") or credentials.get("user_id")
             if not user_id:
@@ -85,12 +83,13 @@ def get_current_user_dependency(
 
             # Verify session belongs to the same user
             session_user_id = session_data.get("user_id")
-            if is_jwt_strategy:
+            if auth.is_jwt_strategy:
                 if session_user_id != user_id:
                     raise CredentialsException("Session/user mismatch")
 
         # Fetch user from user store
-        user = await auth.user.get(session_user_id)
+        lookup_user_id = session_user_id or user_id
+        user = await auth.user.get(lookup_user_id)
         if not user:
             raise UserException("User not found", status_code=404)
 

@@ -30,7 +30,9 @@ class AuthManager:
         self.is_stateless = self.session is None
 
         if not self.is_jwt_strategy and self.is_stateless:
-            raise ValueError(f"Auth strategy `{self.strategy.__class__.__name__}` requires a session store")
+            raise ValueError(
+                f"Auth strategy `{self.strategy.__class__.__name__}` requires a session store"
+            )
 
         for field in self.config.login_fields:
             if field not in self.schema.model_fields:

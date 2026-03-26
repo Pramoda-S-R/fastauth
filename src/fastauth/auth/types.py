@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from typing import Any, List, Optional, Protocol, Set, Union, runtime_checkable
+from typing import Any, Optional, Protocol, Set, Union, runtime_checkable
 
 # -----------------
 # Basic Types

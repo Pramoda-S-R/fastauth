@@ -12,13 +12,13 @@ class BaseUser(BaseModel):
 
 class UserStore(Protocol):
     """Protocol for user storage implementations.
-    
+
     Implementations must provide async methods for:
     - Creating new users
     - Finding users by credentials
     - Getting users by ID
     - Deleting users
-    
+
     Methods:
         create: Create a new user
             Args:
@@ -39,6 +39,7 @@ class UserStore(Protocol):
             Args:
                 user_id: The user ID to delete
     """
+
     async def create(self, **kwargs) -> BaseUser: ...
     async def find(self, **kwargs) -> BaseUser | None: ...
     async def get(self, user_id: str) -> BaseUser | None: ...

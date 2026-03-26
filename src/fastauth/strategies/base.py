@@ -20,7 +20,7 @@ class AuthStrategy(Protocol):
 
     Attributes:
         use_cookie: Whether to use cookies for authentication
-    
+
     Methods:
         issue: Issue a new authentication token
             Args:

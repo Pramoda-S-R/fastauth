@@ -20,7 +20,9 @@ class DBSessionStore(SessionStore):
         db_session: Database session client (e.g., SQLAlchemy session)
     """
 
-    def __init__(self, session_model: type["SessionModel"], db_session: "DatabaseSession"):
+    def __init__(
+        self, session_model: type["SessionModel"], db_session: "DatabaseSession"
+    ):
         self.session_model = session_model
         self.db_session = db_session
 
@@ -135,7 +137,9 @@ class DBSessionStore(SessionStore):
         ttl = kwargs.get("ttl", 86400)
         now = datetime.now(timezone.utc)
 
-        session.expires_at = now + timedelta(seconds=ttl)
+        session.expires_at = now.replace(second=0, microsecond=0) + timedelta(
+            seconds=ttl
+        )
         session.updated_at = now
 
         self.db_session.commit()
