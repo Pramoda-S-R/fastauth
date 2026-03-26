@@ -1,5 +1,5 @@
-from datetime import timedelta
-from typing import Optional, Protocol, Set, Union, runtime_checkable
+from datetime import datetime, timedelta
+from typing import Any, List, Optional, Protocol, Set, Union, runtime_checkable
 
 # -----------------
 # Basic Types
@@ -66,3 +66,39 @@ class Redis(Protocol):
     async def smembers(self, key: KeyT) -> Set[bytes]: ...
 
     def pipeline(self, transaction: bool = True) -> Pipeline: ...
+
+
+# -----------------
+# Database Protocol
+# -----------------
+
+
+@runtime_checkable
+class SessionModel(Protocol):
+    """Protocol for session storage models."""
+
+    session_id: str
+    user_id: str
+    data: str
+    expires_at: datetime
+    created_at: datetime
+    updated_at: datetime
+
+
+@runtime_checkable
+class DatabaseQuery(Protocol):
+    """Protocol for database query objects."""
+
+    def filter(self, *expressions: Any) -> "DatabaseQuery": ...
+    def first(self) -> Any: ...
+    def all(self) -> list[Any]: ...
+
+
+@runtime_checkable
+class DatabaseSession(Protocol):
+    """Protocol for database session clients (e.g., SQLAlchemy Session)."""
+
+    def query(self, model: type[Any]) -> DatabaseQuery: ...
+    def add(self, instance: Any) -> None: ...
+    def delete(self, instance: Any) -> None: ...
+    def commit(self) -> None: ...

@@ -16,6 +16,32 @@ class SessionStore(Protocol):
     - Getting all sessions for a user
     - Deleting sessions
     - Refreshing/updating sessions
+    
+    Methods:
+        create: Create a new session
+            Args:
+                user_id: The user's ID
+                data: Session data to store
+                **kwargs: Additional args (commonly 'ttl' for expiration)
+            Returns:
+                The created session ID
+        get: Retrieve a session by ID
+            Args:
+                session_id: The session ID to look up
+            Returns:
+                Session data dict or None if not found
+        get_by_user: Get all sessions for a user
+            Args:
+                user_id: The user ID to find sessions for
+            Returns:
+                List of session data dicts, or None if none exist
+        delete: Delete a session
+            Args:
+                session_id: The session ID to delete
+        refresh: Refresh/update a session
+            Args:
+                session_id: The session ID to refresh
+                **kwargs: Optional updates (commonly 'ttl')
     """
 
     async def create(self, user_id: str, data: dict[str, Any], **kwargs: Any) -> str:

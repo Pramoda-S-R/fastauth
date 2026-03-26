@@ -63,10 +63,11 @@ def get_current_user_dependency(
         """Core implementation for getting current user."""
         credentials = await _extract_credentials(request)
 
-        # Extract user ID from credentials
-        user_id = credentials.get("sub") or credentials.get("user_id")
-        if not user_id:
-            raise CredentialsException("Invalid token: missing subject")
+        # Extract user ID from credentials if jwt strategy
+        if auth.is_jwt_strategy:
+            user_id = credentials.get("sub") or credentials.get("user_id")
+            if not user_id:
+                raise CredentialsException("Invalid token: missing subject")
 
         # Validate session if session store is configured
         if auth.session:
@@ -84,11 +85,12 @@ def get_current_user_dependency(
 
             # Verify session belongs to the same user
             session_user_id = session_data.get("user_id")
-            if session_user_id != user_id:
-                raise CredentialsException("Session/user mismatch")
+            if is_jwt_strategy:
+                if session_user_id != user_id:
+                    raise CredentialsException("Session/user mismatch")
 
         # Fetch user from user store
-        user = await auth.user.get(user_id)
+        user = await auth.user.get(session_user_id)
         if not user:
             raise UserException("User not found", status_code=404)
 

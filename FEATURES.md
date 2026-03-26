@@ -85,7 +85,7 @@ src/fastauth/
 │   ├── memory.py        # In-memory implementation
 │   ├── redis.py        # Redis implementation
 │   └── db.py           # SQL database implementation
-├── strategy/
+├── strategies/
 │   ├── base.py         # AuthStrategy protocol
 │   ├── jwt.py          # JWT implementation
 │   └── opaque.py       # Opaque token implementation
@@ -106,10 +106,9 @@ src/fastauth/
 
 ```python
 from fastapi import FastAPI
-from fastauth import AuthManager
-from fastauth.auth import AuthConfig
+from fastauth import AuthManager, AuthConfig
 from fastauth.sessions import MemorySessionStore
-from fastauth.strategy import JWTStrategy
+from fastauth.strategies import JWTStrategy
 from fastauth.users import BaseUser
 from pydantic import BaseModel
 

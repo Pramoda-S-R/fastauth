@@ -3,7 +3,7 @@ from pydantic import BaseModel
 
 from ..oauth.base import OAuthProvider
 from ..sessions.base import SessionStore
-from ..strategy.base import AuthStrategy
+from ..strategies.base import AuthStrategy
 from ..users.base import UserStore
 from .config import AuthConfig
 
@@ -25,6 +25,12 @@ class AuthManager:
         self.strategy = strategy
         self.schema = schema
         self.oauth = oauth_provider
+
+        self.is_jwt_strategy = getattr(self.strategy, "is_json_web_token", False)
+        self.is_stateless = self.session is None
+
+        if not self.is_jwt_strategy and self.is_stateless:
+            raise ValueError(f"Auth strategy `{self.strategy.__class__.__name__}` requires a session store")
 
         for field in self.config.login_fields:
             if field not in self.schema.model_fields:

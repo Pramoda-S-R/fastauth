@@ -8,6 +8,11 @@ from ..exceptions import TokenException
 
 
 class JWTStrategy:
+    """JWT strategy - tokens are JSON Web Tokens with embedded claims.
+
+    Session data may or may not be stored server-side (via SessionStore), making this suitable
+    for scenarios requiring stateless authentication.
+    """
     def __init__(
         self,
         secret: str,
@@ -18,6 +23,7 @@ class JWTStrategy:
         get_additional_claims: Callable[[None], dict[str, str]] = lambda: {},
         refresh_ttl_seconds: int = 604800,
     ):
+        self.is_json_web_token = True
         self.secret = secret
         self.algorithm = algorithm
         self.cookie_name = cookie_name
@@ -52,6 +58,16 @@ class JWTStrategy:
     async def issue(
         self, response: Response, data: dict[str, Any], ttl_seconds: int
     ) -> dict[str, str] | None:
+        """Issue new access and refresh tokens.
+
+        Args:
+            response: FastAPI response object to set cookies on
+            data: Claims including 'sid' (session_id)
+            ttl_seconds: Time-to-live for session in seconds
+
+        Returns:
+            Dict with `access_token` and `refresh_token` if not using cookies, None otherwise
+        """
         claims = self.get_additional_claims() | data
 
         issued_at = datetime.now(timezone.utc)
@@ -87,6 +103,15 @@ class JWTStrategy:
             return {"access_token": access_token, "refresh_token": refresh_token}
 
     async def extract(self, request: Request) -> dict[str, Any] | None:
+        """Extract claims from request.
+
+        Looks for claims in:
+        - Cookie (if use_cookie=True)
+        - Authorization header (Bearer scheme)
+
+        Returns:
+            Dict with claims or None if no valid claims found
+        """
         token: str | None = None
         allow_expired = False
 
@@ -109,6 +134,11 @@ class JWTStrategy:
         return await self.verify(token, allow_expired)
 
     async def revoke(self, response: Response) -> None:
+        """Revoke session by clearing cookies.
+
+        Args:
+            response: FastAPI response object to clear cookies on
+        """
         if self.use_cookie:
             response.delete_cookie(
                 key=self.cookie_name,

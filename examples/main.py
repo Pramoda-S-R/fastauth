@@ -7,10 +7,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
-from fastauth.auth.config import AuthConfig
-from fastauth.auth.manager import AuthManager
-from fastauth.sessions.memory import MemorySessionStore
-from fastauth.strategy.opaque import OpaqueStrategy
+from fastauth import AuthConfig, AuthManager
+from fastauth.sessions import MemorySessionStore
+from fastauth.strategies import OpaqueStrategy
 
 origins = ["*"]
 
@@ -91,7 +90,7 @@ auth_manager = AuthManager(
         login_after_signup=False,
     ),
     user_store=User(),
-    session_store=MemorySessionStore(),
+    # session_store=MemorySessionStore(),
     # strategy=JWTStrategy(secret="opensrc4lyf", algorithm="HS256", use_cookie=False),
     strategy=OpaqueStrategy(),
     schema=AppUser,
@@ -131,4 +130,4 @@ app = create_app()
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="127.0.0.1", port=8000)

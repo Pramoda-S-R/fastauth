@@ -71,8 +71,8 @@ def build_auth_router(auth: "AuthManager") -> APIRouter:
         if auth.session:
             try:
                 session_data = {"jti": jti, "user_agent": user_agent, "ip": client_ip}
-                from pprint import pprint
-                pprint(session_data)
+                # from pprint import pprint
+                # pprint(session_data)
                 session_id = await auth.session.create(
                     user_id=user_id,
                     data=session_data,

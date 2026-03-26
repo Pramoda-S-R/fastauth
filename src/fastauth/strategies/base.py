@@ -17,6 +17,26 @@ class AuthStrategy(Protocol):
     - Issuing tokens (with optional cookie support)
     - Extracting credentials from requests
     - Revoking tokens (clearing cookies/headers)
+
+    Attributes:
+        use_cookie: Whether to use cookies for authentication
+    
+    Methods:
+        issue: Issue a new authentication token
+            Args:
+                response: FastAPI response object (for setting cookies)
+                data: Token claims (sub, jti, sid, etc.)
+                ttl_seconds: Token time-to-live in seconds
+            Returns:
+                None if using cookies, or dict with access_token/refresh_token
+        extract: Extract credentials from a request
+            Args:
+                request: FastAPI request object
+            Returns:
+                Dict with claims (sub, sid, etc.) or None if not authenticated
+        revoke: Revoke/clear authentication tokens
+            Args:
+                response: FastAPI response object (for clearing cookies)
     """
 
     # Optional attribute indicating cookie-based auth
