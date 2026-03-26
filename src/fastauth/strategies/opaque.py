@@ -3,8 +3,8 @@ from typing import Any
 from fastapi import Request, Response
 
 
-class OpaqueStrategy:
-    """Opaque token strategy - Session id with no embedded claims.
+class OpaqueSessionStrategy:
+    """Opaque session id strategy - Session id with no embedded claims.
 
     Session data is stored server-side (via SessionStore), making this suitable
     for scenarios requiring session revocation, rotation, or server-side state.
@@ -21,7 +21,7 @@ class OpaqueStrategy:
     async def issue(
         self, response: Response, data: dict[str, Any], ttl_seconds: int
     ) -> dict[str, str] | None:
-        """Issue new access and refresh tokens.
+        """Issue session id cookie or return session id.
 
         Args:
             **response**: FastAPI response object to set cookies on

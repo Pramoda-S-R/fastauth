@@ -69,3 +69,15 @@ def get_accept_language(request: Request) -> Optional[str]:
         Accept-Language string or None if not present
     """
     return request.headers.get("Accept-Language")
+
+
+def get_accept_encoding(request: Request) -> Optional[str]:
+    """Extract the Accept-Encoding header from a request.
+
+    Args:
+        request: FastAPI Request object
+
+    Returns:
+        Accept-Encoding string or None if not present
+    """
+    return request.headers.get("Accept-Encoding")

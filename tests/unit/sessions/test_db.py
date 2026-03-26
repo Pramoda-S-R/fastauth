@@ -3,7 +3,7 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
-from fastauth.sessions.db import DBSessionStore
+from fastauth.sessions.sql import DBSessionStore
 
 
 @pytest.mark.asyncio

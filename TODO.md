@@ -1,5 +1,8 @@
 # FastAuth Implementation Status
 
+## BUGS
+- [ ] Bearer token auth implementation doesn't show up in swagger ui
+
 ## ✅ Implemented Features
 
 ### Phase 0 – Foundations & Contracts (v0.1.0)
@@ -38,7 +41,7 @@
 ## 📋 TODO Checklist
 
 ### Phase 0 – Foundations & Contracts
-- [ ] ~~Complete~~ (All done)
+- [x] ~~Complete~~ (All done)
 
 ### Phase 1 – Core Authentication (v0.2.0)
 - [x] Opaque session ID token strategy (`src/fastauth/strategy/opaque.py`)

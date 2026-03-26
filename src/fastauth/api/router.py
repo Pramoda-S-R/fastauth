@@ -13,11 +13,11 @@ from typing import TYPE_CHECKING, Any, Optional
 
 from fastapi import APIRouter, Depends, Request, Response
 
-from ..crypto import hash_password, verify_password
+from ..crypto import hash_password, verify_password, soft_fingerprint
 from ..exceptions import (LoginException, LogoutException, SessionException,
                           SignUpException, TokenException, UserException)
 from ..users.base import BaseUser
-from ..utils import get_accept_language, get_client_ip, get_user_agent
+from ..utils import get_accept_language, get_client_ip, get_user_agent, get_accept_encoding
 
 if TYPE_CHECKING:
     from ..auth.manager import AuthManager
@@ -50,6 +50,7 @@ def build_auth_router(auth: "AuthManager") -> APIRouter:
         # Extract request metadata for audit logging
         user_agent = get_user_agent(request)
         accept_language = get_accept_language(request)
+        accept_encoding = get_accept_encoding(request)
         client_ip = get_client_ip(request)
 
         # Generate unique token identifier
@@ -64,9 +65,8 @@ def build_auth_router(auth: "AuthManager") -> APIRouter:
         session_id: Optional[str] = None
         if auth.session:
             try:
-                session_data = {"jti": jti, "user_agent": user_agent, "ip": client_ip}
-                # from pprint import pprint
-                # pprint(session_data)
+                fingerprint = soft_fingerprint(user_agent, client_ip, accept_language, accept_encoding)
+                session_data = {"jti": jti, "user_agent": user_agent, "ip": client_ip, "fingerprint": fingerprint}
                 session_id = await auth.session.create(
                     user_id=user_id,
                     data=session_data,

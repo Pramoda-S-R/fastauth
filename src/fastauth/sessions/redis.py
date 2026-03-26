@@ -82,6 +82,7 @@ class RedisSessionStore:
     async def get_by_user(self, user_id: str) -> list[dict[str, Any]] | None:
         """Get all sessions for a user.
 
+        **IMPORTANT: This method is not implemented for Redis session store.**
         Note: This is expensive in Redis as it requires scanning all keys.
         Consider using a separate index (e.g., SET of session IDs per user) for production.
 
@@ -91,7 +92,7 @@ class RedisSessionStore:
         Returns:
             List of session data dicts (may include expired sessions)
         """
-        return None
+        raise NotImplementedError("Redis session store does not support get_by_user")
 
     async def delete(self, session_id: str) -> None:
         """Delete a session.

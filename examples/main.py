@@ -87,7 +87,7 @@ auth_manager = AuthManager(
         login_fields=["username", "email"],
         signup_request=SignupRequest,
         login_request=LoginRequest,
-        login_after_signup=False,
+        login_after_signup=True,
     ),
     user_store=User(),
     session_store=MemorySessionStore(),

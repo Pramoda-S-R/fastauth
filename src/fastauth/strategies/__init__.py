@@ -1,4 +1,4 @@
 from .jwt import JWTStrategy
-from .opaque import OpaqueStrategy
+from .opaque import OpaqueSessionStrategy
 
-__all__ = ["JWTStrategy", "OpaqueStrategy"]
+__all__ = ["JWTStrategy", "OpaqueSessionStrategy"]

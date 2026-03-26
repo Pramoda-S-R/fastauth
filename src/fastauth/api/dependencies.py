@@ -31,6 +31,18 @@ def _get_use_bearer(auth: "AuthManager") -> bool:
         return False
     return True
 
+async def _extract_credentials(request: Request) -> dict[str, Any]:
+    """Extract credentials from request using strategy."""
+    try:
+        credentials = await auth.strategy.extract(request)
+        if not credentials:
+            raise CredentialsException("No credentials provided")
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise TokenException(str(e))
+    return credentials
+
 
 def get_current_user_dependency(
     auth: "AuthManager",
@@ -42,18 +54,6 @@ def get_current_user_dependency(
     """
     use_bearer = _get_use_bearer(auth)
     security = HTTPBearer(auto_error=False)
-
-    async def _extract_credentials(request: Request) -> dict[str, Any]:
-        """Extract credentials from request using strategy."""
-        try:
-            credentials = await auth.strategy.extract(request)
-            if not credentials:
-                raise CredentialsException("No credentials provided")
-        except HTTPException:
-            raise
-        except Exception as e:
-            raise TokenException(str(e))
-        return credentials
 
     async def _get_current_user_impl(request: Request) -> BaseUser:
         """Core implementation for getting current user."""
@@ -123,18 +123,6 @@ def get_current_session_dependency(
     """
     use_bearer = _get_use_bearer(auth)
     security = HTTPBearer(auto_error=False)
-
-    async def _extract_credentials(request: Request) -> dict[str, Any]:
-        """Extract credentials from request using strategy."""
-        try:
-            credentials = await auth.strategy.extract(request)
-            if not credentials:
-                raise CredentialsException("No credentials provided")
-        except HTTPException:
-            raise
-        except Exception as e:
-            raise TokenException(str(e))
-        return credentials
 
     async def _get_current_session_impl(request: Request) -> str:
         """Core implementation for getting current session."""

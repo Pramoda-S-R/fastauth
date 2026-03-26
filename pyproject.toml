@@ -1,6 +1,6 @@
 [project]
 name = "fastauth"
-version = "0.1.0"
+version = "0.2.0"
 description = "A ready-to-use, customizable solution for FastAPI with Authentication, Authorization (RBAC), and OAuth2 support. This solution provides token based or cookie based authentication(JWT, Redis, DB), role-based access control, and OAuth2 integration."
 readme = "README.md"
 authors = [

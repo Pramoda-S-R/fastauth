@@ -9,8 +9,8 @@ if TYPE_CHECKING:
     from ..auth.types import DatabaseSession, SessionModel
 
 
-class DBSessionStore(SessionStore):
-    """Database-backed session store.
+class SQLSessionStore(SessionStore):
+    """SQL database-backed session store.
 
     Stores sessions in any SQL database. Requires a database model
     that follows the SessionModel protocol.
@@ -26,6 +26,13 @@ class DBSessionStore(SessionStore):
         self.session_model = session_model
         self.db_session = db_session
 
+        # Validate session model
+        required_fields = ["id", "user_id", "ip", "user_agent", "jti", "fingerprint", "expires_at", "created_at", "updated_at"]
+        missing_fields = [field for field in required_fields if not hasattr(session_model, field)]
+        if missing_fields:
+            raise ValueError(f"Session model is missing required fields: {', '.join(missing_fields)}")
+        
+
     async def create(self, user_id: str, data: dict[str, Any], **kwargs) -> str:
         """Create a new session.
 
@@ -37,14 +44,23 @@ class DBSessionStore(SessionStore):
         Returns:
             The created session_id
         """
+        # unpack data
+        ip = data.pop("ip", None)
+        user_agent = data.pop("user_agent", None)
+        jti = data.pop("jti", None)
+        fingerprint = data.pop("fingerprint", None)
+        
         ttl = kwargs.get("ttl", 86400)  # default 24 hours
         session_id = uuid.uuid4().hex
         now = datetime.now(timezone.utc)
 
         session = self.session_model(
-            session_id=session_id,
+            id=session_id,
             user_id=user_id,
-            data=json.dumps(data),
+            ip=ip,
+            user_agent=user_agent,
+            jti=jti,
+            fingerprint=fingerprint,
             expires_at=now.replace(second=0, microsecond=0) + timedelta(seconds=ttl),
             created_at=now,
             updated_at=now,
@@ -77,7 +93,25 @@ class DBSessionStore(SessionStore):
             await self.delete(session_id)
             return None
 
-        return json.loads(session.data)
+        session_data = {
+            "session_id": session.session_id,
+            "user_id": session.user_id,
+            "ip": session.ip,
+            "user_agent": session.user_agent,
+            "jti": session.jti,
+            "fingerprint": session.fingerprint,
+            "expires_at": session.expires_at,
+            "created_at": session.created_at,
+            "updated_at": session.updated_at,
+        }
+        # try:
+        #     extra_data = json.loads(session.data)
+        #     if isinstance(extra_data, dict):
+        #         session_data.update(extra_data)
+        # except (json.JSONDecodeError, TypeError):
+        #     pass
+
+        return session_data
 
     async def get_by_user(self, user_id: str) -> list[dict[str, Any]] | None:
         """Get all sessions for a user.
@@ -100,7 +134,28 @@ class DBSessionStore(SessionStore):
         if not sessions:
             return None
 
-        return [json.loads(s.data) for s in sessions]
+        results = []
+        for s in sessions:
+            s_dict = {
+                "session_id": s.session_id,
+                "user_id": s.user_id,
+                "ip": s.ip,
+                "user_agent": s.user_agent,
+                "jti": s.jti,
+                "fingerprint": s.fingerprint,
+                "expires_at": s.expires_at,
+                "created_at": s.created_at,
+                "updated_at": s.updated_at,
+            }
+            # try:
+            #     extra_data = json.loads(s.data)
+            #     if isinstance(extra_data, dict):
+            #         s_dict.update(extra_data)
+            # except (json.JSONDecodeError, TypeError):
+            #     pass
+            results.append(s_dict)
+
+        return results
 
     async def delete(self, session_id: str) -> None:
         """Delete a session.
