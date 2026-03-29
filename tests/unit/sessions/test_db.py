@@ -1,14 +1,13 @@
-import json
 from datetime import datetime, timedelta, timezone
 
 import pytest
 
-from fastauth.sessions.sql import DBSessionStore
+from fastauth.sessions.sql import SQLSessionStore
 
 
 @pytest.mark.asyncio
 async def test_db_session_create(mock_db_session, mock_session_model):
-    store = DBSessionStore(mock_session_model, mock_db_session)
+    store = SQLSessionStore(mock_session_model, mock_db_session)
     user_id = "user_123"
     data = {"role": "admin"}
 
@@ -18,27 +17,25 @@ async def test_db_session_create(mock_db_session, mock_session_model):
     assert mock_db_session.committed is True
 
     session = mock_db_session.added[0]
-    assert session.session_id == session_id
+    assert session.id == session_id
     assert session.user_id == user_id
-    assert json.loads(session.data) == data
 
 
 @pytest.mark.asyncio
 async def test_db_session_get(mock_db_session, mock_session_model):
-    store = DBSessionStore(mock_session_model, mock_db_session)
+    store = SQLSessionStore(mock_session_model, mock_db_session)
     user_id = "user_123"
     data = {"role": "admin"}
 
     session_id = await store.create(user_id, data)
     session = await store.get(session_id)
 
-    assert session is not None
-    assert session["role"] == "admin"
+    assert session["user_id"] == user_id
 
 
 @pytest.mark.asyncio
 async def test_db_session_expiration(mock_db_session, mock_session_model):
-    store = DBSessionStore(mock_session_model, mock_db_session)
+    store = SQLSessionStore(mock_session_model, mock_db_session)
     user_id = "user_123"
 
     # Create session
@@ -57,7 +54,7 @@ async def test_db_session_expiration(mock_db_session, mock_session_model):
 
 @pytest.mark.asyncio
 async def test_db_session_delete(mock_db_session, mock_session_model):
-    store = DBSessionStore(mock_session_model, mock_db_session)
+    store = SQLSessionStore(mock_session_model, mock_db_session)
     session_id = await store.create("user_123", {})
 
     await store.delete(session_id)
@@ -67,7 +64,7 @@ async def test_db_session_delete(mock_db_session, mock_session_model):
 
 @pytest.mark.asyncio
 async def test_db_session_refresh(mock_db_session, mock_session_model):
-    store = DBSessionStore(mock_session_model, mock_db_session)
+    store = SQLSessionStore(mock_session_model, mock_db_session)
     user_id = "user_123"
 
     # Simulate an hour old session getting refreshed

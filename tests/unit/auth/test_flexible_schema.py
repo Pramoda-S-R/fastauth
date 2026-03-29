@@ -1,8 +1,7 @@
 import pytest
 from fastapi import Request, Response
 
-from fastauth.auth.config import AuthConfig
-from fastauth.auth.manager import AuthManager
+from fastauth import AuthConfig, AuthManager
 from fastauth.users.base import BaseUser
 
 

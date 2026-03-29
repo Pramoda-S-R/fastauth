@@ -1,8 +1,7 @@
 import pytest
 from pydantic import BaseModel
 
-from fastauth.auth.config import AuthConfig
-from fastauth.auth.manager import AuthManager
+from fastauth import AuthConfig, AuthManager
 
 
 class TestSchema(BaseModel):

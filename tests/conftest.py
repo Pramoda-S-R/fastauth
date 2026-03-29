@@ -22,8 +22,13 @@ class MockSessionModel:
             setattr(self, k, v)
 
     # Class attributes to avoid AttributeError in 'Model.column' access
+    id = None
     session_id = None
     user_id = None
+    ip = None
+    user_agent = None
+    jti = None
+    fingerprint = None
     data = None
     expires_at = None
     created_at = None

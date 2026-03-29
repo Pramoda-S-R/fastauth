@@ -1,7 +1,7 @@
 import pytest
 from pydantic import BaseModel, ValidationError
 
-from fastauth.auth.config import AuthConfig
+from fastauth import AuthConfig
 
 
 def test_auth_config_valid_slug():

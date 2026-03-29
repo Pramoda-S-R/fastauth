@@ -1,7 +1,7 @@
 import logging
 
-from .auth.config import AuthConfig
-from .auth.manager import AuthManager
+from .core.config import AuthConfig, RBACConfig, ABACConfig
+from .core.manager import AuthManager
 
 logging.getLogger("fastauth").addHandler(logging.NullHandler())
 logging.getLogger("fastauth.audit").addHandler(logging.NullHandler())

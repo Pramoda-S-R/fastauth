@@ -48,18 +48,22 @@
 - [x] DB-based session store (`src/fastauth/sessions/db.py`)
 
 ### Phase 2 – Authorization & Identity Model (v0.3.0)
-- [ ] Implement RBAC:
-  - [ ] Roles definition system (`src/fastauth/rbac/roles.py`)
-  - [ ] Permissions system
-  - [ ] Role assignment to users
-- [ ] ABAC hooks (attribute evaluation engine)
-- [ ] Policy evaluation interface
-- [ ] Authorization dependency helpers (`src/fastauth/rbac/dependencies.py`)
+- [x] Implement RBAC:
+  - [x] Roles definition system (`src/fastauth/authorization/base.py`)
+  - [x] Permissions system (`src/fastauth/authorization/base.py`)
+  - [x] Role assignment to users (`src/fastauth/authorization/stores/memory.py`, `src/fastauth/authorization/stores/sql.py`)
+- [x] ABAC hooks (attribute evaluation engine) (`src/fastauth/authorization/engine.py`)
+- [x] Policy evaluation interface (`src/fastauth/authorization/base.py`)
+- [x] Authorization dependency helpers (`src/fastauth/authorization/dependencies.py`)
+- [x] Plugin-based role stores:
+  - [x] In-memory (`src/fastauth/authorization/stores/memory.py`)
+  - [x] SQL (`src/fastauth/authorization/stores/sql.py`)
+- [x] Opt-in RBAC/ABAC via AuthConfig (`src/fastauth/auth/config.py`)
 - [ ] Tenant-aware identity model (single tenant per user)
-- [ ] Lock in:
-  - [ ] Permission resolution order
-  - [ ] How roles attach to users
-  - [ ] How policies are evaluated
+- [x] Lock in:
+  - [x] Permission resolution order
+  - [x] How roles attach to users
+  - [x] How policies are evaluated
 
 ### Phase 3 – OAuth & Magic Links (v0.4.0)
 - [ ] Built-in OAuth providers:

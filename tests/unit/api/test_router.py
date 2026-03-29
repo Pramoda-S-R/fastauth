@@ -3,9 +3,8 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from pydantic import BaseModel
 
+from fastauth import AuthConfig, AuthManager
 from fastauth.api.router import build_auth_router
-from fastauth.auth.config import AuthConfig
-from fastauth.auth.manager import AuthManager
 
 
 class MockUserSchema(BaseModel):

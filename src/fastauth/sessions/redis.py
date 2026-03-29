@@ -11,7 +11,7 @@ from datetime import datetime, timezone
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from ..auth.types import Redis
+    from ..core.types import Redis
 
 
 class RedisSessionStore:

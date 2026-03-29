@@ -1,12 +1,12 @@
 import pytest
 from fastapi import Request, Response
 
-from fastauth.strategies.opaque import OpaqueStrategy
+from fastauth.strategies.opaque import OpaqueSessionStrategy
 
 
 @pytest.fixture
 def opaque_strategy():
-    return OpaqueStrategy(use_cookie=False)
+    return OpaqueSessionStrategy(use_cookie=False)
 
 
 @pytest.mark.asyncio
@@ -44,7 +44,7 @@ async def test_opaque_strategy_extract_header(opaque_strategy):
 
 @pytest.mark.asyncio
 async def test_opaque_strategy_extract_cookie():
-    strategy = OpaqueStrategy(use_cookie=True, cookie_name="session_id")
+    strategy = OpaqueSessionStrategy(use_cookie=True, cookie_name="session_id")
     request = Request(
         scope={
             "type": "http",
@@ -60,7 +60,7 @@ async def test_opaque_strategy_extract_cookie():
 
 @pytest.mark.asyncio
 async def test_opaque_strategy_revoke():
-    strategy = OpaqueStrategy(use_cookie=True, cookie_name="session_id")
+    strategy = OpaqueSessionStrategy(use_cookie=True, cookie_name="session_id")
     response = Response()
     await strategy.revoke(response)
 

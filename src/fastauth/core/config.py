@@ -1,14 +1,23 @@
 # auth/config.py
 from enum import Enum
-from typing import Annotated, Callable, Type
+from typing import Annotated, Any, Callable, Type
 
-from pydantic import (BaseModel, StringConstraints, create_model,
-                      model_validator)
+from pydantic import BaseModel, StringConstraints, create_model, model_validator
 
 from .models import LoginRequest, SignupRequest
 
 LowerSnakeStr = Annotated[str, StringConstraints(pattern=r"^[a-z0-9_]+$")]
 LoginFieldStr = Annotated[str, StringConstraints(min_length=1)]
+
+
+class RBACConfig(BaseModel):
+    enabled: bool = False
+    default_roles: list[str] = []
+    default_attributes: dict[str, Any] = {}
+
+
+class ABACConfig(BaseModel):
+    enabled: bool = False
 
 
 class AuthConfig(BaseModel):
@@ -19,6 +28,9 @@ class AuthConfig(BaseModel):
     login_after_signup: bool = True
     password_validator: Callable[[str], bool] = lambda x: True
     roles: type[Enum] | None = None
+
+    rbac: RBACConfig = RBACConfig()
+    abac: ABACConfig = ABACConfig()
 
     signup_request: Type[BaseModel] | None = None
     login_request: Type[BaseModel] | None = None

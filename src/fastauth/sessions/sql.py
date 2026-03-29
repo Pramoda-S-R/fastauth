@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Any
 from .base import SessionStore
 
 if TYPE_CHECKING:
-    from ..auth.types import DatabaseSession, SessionModel
+    from ..core.types import DatabaseSession, SessionModel
 
 
 class SQLSessionStore(SessionStore):
@@ -82,7 +82,7 @@ class SQLSessionStore(SessionStore):
         """
         session = (
             self.db_session.query(self.session_model)
-            .filter(self.session_model.session_id == session_id)
+            .filter(self.session_model.id == session_id)
             .first()
         )
 
@@ -94,7 +94,7 @@ class SQLSessionStore(SessionStore):
             return None
 
         session_data = {
-            "session_id": session.session_id,
+            "session_id": session.id,
             "user_id": session.user_id,
             "ip": session.ip,
             "user_agent": session.user_agent,
@@ -104,13 +104,6 @@ class SQLSessionStore(SessionStore):
             "created_at": session.created_at,
             "updated_at": session.updated_at,
         }
-        # try:
-        #     extra_data = json.loads(session.data)
-        #     if isinstance(extra_data, dict):
-        #         session_data.update(extra_data)
-        # except (json.JSONDecodeError, TypeError):
-        #     pass
-
         return session_data
 
     async def get_by_user(self, user_id: str) -> list[dict[str, Any]] | None:
@@ -137,7 +130,7 @@ class SQLSessionStore(SessionStore):
         results = []
         for s in sessions:
             s_dict = {
-                "session_id": s.session_id,
+                "session_id": s.id,
                 "user_id": s.user_id,
                 "ip": s.ip,
                 "user_agent": s.user_agent,
@@ -147,12 +140,6 @@ class SQLSessionStore(SessionStore):
                 "created_at": s.created_at,
                 "updated_at": s.updated_at,
             }
-            # try:
-            #     extra_data = json.loads(s.data)
-            #     if isinstance(extra_data, dict):
-            #         s_dict.update(extra_data)
-            # except (json.JSONDecodeError, TypeError):
-            #     pass
             results.append(s_dict)
 
         return results
@@ -165,7 +152,7 @@ class SQLSessionStore(SessionStore):
         """
         session = (
             self.db_session.query(self.session_model)
-            .filter(self.session_model.session_id == session_id)
+            .filter(self.session_model.id == session_id)
             .first()
         )
 
@@ -182,7 +169,7 @@ class SQLSessionStore(SessionStore):
         """
         session = (
             self.db_session.query(self.session_model)
-            .filter(self.session_model.session_id == session_id)
+            .filter(self.session_model.id == session_id)
             .first()
         )
 

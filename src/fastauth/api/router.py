@@ -20,7 +20,7 @@ from ..users.base import BaseUser
 from ..utils import get_accept_language, get_client_ip, get_user_agent, get_accept_encoding
 
 if TYPE_CHECKING:
-    from ..auth.manager import AuthManager
+    from ..core.manager import AuthManager
 
 
 def build_auth_router(auth: "AuthManager") -> APIRouter:

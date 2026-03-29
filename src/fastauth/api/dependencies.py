@@ -16,7 +16,7 @@ from ..exceptions import (CredentialsException, SessionException,
                           TokenException, UserException)
 
 if TYPE_CHECKING:
-    from ..auth.manager import AuthManager
+    from ..core.manager import AuthManager
 
 from ..users.base import BaseUser
 
@@ -31,7 +31,7 @@ def _get_use_bearer(auth: "AuthManager") -> bool:
         return False
     return True
 
-async def _extract_credentials(request: Request) -> dict[str, Any]:
+async def _extract_credentials(request: Request, auth: "AuthManager") -> dict[str, Any]:
     """Extract credentials from request using strategy."""
     try:
         credentials = await auth.strategy.extract(request)
@@ -57,7 +57,7 @@ def get_current_user_dependency(
 
     async def _get_current_user_impl(request: Request) -> BaseUser:
         """Core implementation for getting current user."""
-        credentials = await _extract_credentials(request)
+        credentials = await _extract_credentials(request, auth)
 
         # Extract user ID from credentials if jwt strategy
         user_id = None
@@ -126,7 +126,7 @@ def get_current_session_dependency(
 
     async def _get_current_session_impl(request: Request) -> str:
         """Core implementation for getting current session."""
-        credentials = await _extract_credentials(request)
+        credentials = await _extract_credentials(request, auth)
 
         session_id = credentials.get("sid")
         if not session_id:
